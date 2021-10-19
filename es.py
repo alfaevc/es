@@ -57,11 +57,11 @@ def gradascent(theta0, method=None, eta=1e-2, max_epoch=1000):
   for i in range(max_epoch):
     accum_rewards[i] = rl_fn(theta, env)
     if method == "FD":
-      theta = theta + eta * FD_gradient(theta, sigma=1, N=100)
+      theta += eta * FD_gradient(theta, sigma=1, N=100)
     elif method == "AT":
-      theta = theta + eta * AT_gradient(theta, sigma=1, N=100)
+      theta += eta * AT_gradient(theta, sigma=1, N=100)
     else: #vanilla
-      theta = theta + eta * vanilla_gradient(theta, sigma=1, N=100)
+      theta += eta * vanilla_gradient(theta, sigma=1, N=100)
   return theta, accum_rewards
 
 """The cell below applies your CMA-ES implementation to the RL objective you've defined in the cell above."""
