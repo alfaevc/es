@@ -77,17 +77,19 @@ if __name__ == '__main__':
   # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
   # print(np.array(list(map(fn, epsilons))))
   
-  theta, accum_rewards = gradascent(theta0, fn_with_env)
+  theta, accum_rewards = gradascent(theta0, fn_with_env, method="FD")
   
-  plt.plot(range(1, len(accum_rewards)+1), accum_rewards, label='mean sample reward')
+  plt.plot(range(1, len(accum_rewards)+1), accum_rewards, label='return')
   #plt.plot(range(1, len(best_sample_vec)+1), best_sample_vec, label='best sample reward')
   plt.legend()
   plt.grid(True)
   plt.xlabel('Iterations')
   plt.ylabel('Return')
 
-  plt.title("Vanilla ES", fontsize = 24)
-  plt.savefig("plots/Vanilla ES.png")
+  plt.title("FD ES", fontsize = 24)
+  plt.savefig("plots/FD ES.png")
+  #plt.title("Vanilla ES", fontsize = 24)
+  #plt.savefig("plots/Vanilla ES.png")
   
   """
   r_vec = [fn_with_env(np.ones(5)) for _ in tqdm.trange(1000)]
