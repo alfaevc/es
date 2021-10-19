@@ -8,7 +8,6 @@ import tqdm
 
 
 """### AT vs FD
-Implement CMA-ES below.
 """
 
 def _sigmoid(x):
@@ -52,8 +51,18 @@ def AT_gradient(theta, sigma=1, N=100):
   fn = lambda x: (rl_fn(theta + sigma * x) - rl_fn(theta - sigma * x)) * x
   return np.mean(np.fromiter(map(fn, epsilons), dtype=np.float), axis=1)/sigma/2
     
-
-
+def gradascent(theta0, method=None, eta=1e-2, max_epoch=1000):
+  theta = np.copy(theta0)
+  accum_rewards = np.zeros(max_epoch)
+  for i in range(max_epoch):
+    accum_rewards[i] = rl_fn(theta, env)
+    if method == "FD":
+      theta = theta + eta * FD_gradient(theta, sigma=1, N=100)
+    elif method == "AT":
+      theta = theta + eta * AT_gradient(theta, sigma=1, N=100)
+    else: #vanilla
+      theta = theta + eta * vanilla_gradient(theta, sigma=1, N=100)
+  return theta, accum_rewards
 
 """The cell below applies your CMA-ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
