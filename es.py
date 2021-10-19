@@ -56,6 +56,7 @@ def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=1000):
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch):
     accum_rewards[i] = F(theta)
+    print(F(theta))
     if method == "FD":
       theta += eta * FD_gradient(theta, F, sigma=1, N=100)
     elif method == "AT":
