@@ -54,7 +54,7 @@ def AT_gradient(theta, F, sigma=1, N=100):
 def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200):
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
-  for i in range(max_epoch):
+  for i in tqdm.tqdm(range(max_epoch)):
     accum_rewards[i] = F(theta)
     print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     if method == "FD":
