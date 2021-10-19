@@ -51,12 +51,12 @@ def AT_gradient(theta, F, sigma=1, N=100):
   fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
     
-def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=1000):
+def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200):
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch):
     accum_rewards[i] = F(theta)
-    print(F(theta))
+    print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     if method == "FD":
       theta += eta * FD_gradient(theta, F, sigma=1, N=100)
     elif method == "AT":
@@ -85,6 +85,9 @@ if __name__ == '__main__':
   plt.grid(True)
   plt.xlabel('Iterations')
   plt.ylabel('Return')
+
+  plt.title("Vanilla ES", fontsize = 24)
+  plt.savefig("plots/Vanilla ES.png")
   
   """
   r_vec = [fn_with_env(np.ones(5)) for _ in tqdm.trange(1000)]
