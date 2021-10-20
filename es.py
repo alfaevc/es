@@ -55,11 +55,11 @@ def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100):
     accum_rewards[i] = F(theta)
     print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     if method == "FD":
-      theta += eta * FD_gradient(theta, F, theta_len, N=N)
+      theta += eta * FD_gradient(theta, F, N=N)
     elif method == "AT":
-      theta += eta * AT_gradient(theta, F, theta_len, N=N)
+      theta += eta * AT_gradient(theta, F, N=N)
     else: #vanilla
-      theta += eta * vanilla_gradient(theta, F, theta_len, N=N)
+      theta += eta * vanilla_gradient(theta, F, N=N)
   return theta, accum_rewards
 
 """The cell below applies your CMA-ES implementation to the RL objective you've defined in the cell above."""
