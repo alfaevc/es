@@ -73,7 +73,7 @@ if __name__ == '__main__':
   max_epoch = 150
   N = 20
   res = np.zeros((num_seeds, max_epoch))
-  method = "V"
+  method = "AT"
 
   for k in tqdm.tqdm(range(num_seeds)):
     theta0 = np.random.multivariate_normal(np.zeros(5), np.identity(5))
