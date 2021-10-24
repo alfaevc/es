@@ -59,19 +59,24 @@ def orthogonal_epsilons(theta):
     epsilons = np.random.standard_normal(size=(theta.size, theta.size))
     Q, _ = np.linalg.qr(epsilons)#orthogonalize epsilons
     Q_normalize=np.copy(Q)
-    for i in range(theta.size):#renormalize rows of Q by multiplying it by length of corresponding row of epsilons
-      norm=np.linalg.norm(epsilons[i])
-      Q_normalize[i]=Q_normalize[i]*norm
+    fn = lambda x, y: np.linalg.norm(x) * y
+    #renormalize rows of Q by multiplying it by length of corresponding row of epsilons
+    Q_normalize = np.array(list(map(fn, epsilons, Q_normalize)))
+    #for i in range(theta.size):
+    #  norm=np.linalg.norm(epsilons[i])
+    #Q_normalize[i]=Q_normalize[i]*norm
     return Q_normalize@Q
 
 def hessian_gaussian_smoothing(theta, F, sigma=1, N=5):
   epsilons = np.random.standard_normal(size=(N, theta.size))
   fn = lambda x: F(theta + sigma * x) 
   second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
-  hessian=np.zeros((theta.size,theta.size))
-  for i in range(N):
-    hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
-  hessian-=np.identity(theta.size)*second_term
+  fn = lambda x: F(theta + sigma * x)*np.outer(x,x)/(N*sigma**2)
+  hessian = np.sum(np.array(list(map(fn, epsilons))), axis = 0)
+  # hessian=np.zeros((theta.size,theta.size))
+  # for i in range(N):
+  #   hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
+  hessian -=np.identity(theta.size)*second_term
   return hessian
 
 def choose_covariate(theta,F,sigma=1,N=theta.size):
