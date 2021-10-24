@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[55]:
+# In[ ]:
 
 
 # -*- coding: utf-8 -*-
@@ -50,7 +50,8 @@ def FD_gradient(theta, F, sigma=1, N=100):
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
 
 def AT_gradient(theta, F, sigma=1, N=100):
-  epsilons = np.random.standard_normal(size=(N, theta.size))
+  #epsilons = np.random.standard_normal(size=(N, theta.size))
+  epsilons=orthogonal_epsilons(theta)
   fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
 
@@ -91,6 +92,8 @@ def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100):
   theta = np.copy(theta0)
   theta_len = theta.size
   accum_rewards = np.zeros(max_epoch)
+  choice, MSE_FD, MSE_AT=choose_covariate(theta,F,sigma=1,N=theta.size)
+  print('best method is ',choice,', MSE of FD is ',MSE_FD,', MSE OF AT is ', MSE_AT)
   for i in range(max_epoch):
     accum_rewards[i] = F(theta)
     if i%50==0:
@@ -112,7 +115,7 @@ if __name__ == '__main__':
   max_epoch = 151
   N = 5
   res = np.zeros((num_seeds, max_epoch))
-  method = "AT"
+  method = "FD"
 
   for k in tqdm.tqdm(range(num_seeds)):
     theta0 = np.random.standard_normal(size=theta_dim)
@@ -150,24 +153,10 @@ if __name__ == '__main__':
     plt.savefig("plots/Vanilla ES.png")
 
 
-# In[15]:
+# In[ ]:
 
 
-epsilons = np.random.standard_normal(size=(theta.size, theta.size))
-epsilons
 
-
-# In[16]:
-
-
-epsilons=orthogonal_epsilons(theta)
-epsilons
-
-
-# In[30]:
-
-
-np.outer(epsilons[0],epsilons[0])
 
 
 # In[ ]:
