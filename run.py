@@ -26,8 +26,8 @@ if __name__ == '__main__':
   env_name = 'InvertedPendulumBulletEnv-v0'
   # env_name = 'CartPole-v0'
   env = gym.make(env_name)
-  # theta_dim = 5
   state_dim = env.reset().size
+  # theta_dim = state_dim + 1
   theta_dim = (state_dim + 1) * 2
 
   # lp = policy.Log(env)
@@ -39,7 +39,8 @@ if __name__ == '__main__':
   max_epoch = 201
   N = 5
   res = np.zeros((num_seeds, max_epoch))
-  method = "FD"
+  method = "V"
+  print("The method is {}".format(method))
 
   for k in tqdm.tqdm(range(num_seeds)):
     theta0 = np.random.standard_normal(size=theta_dim)
@@ -65,16 +66,10 @@ if __name__ == '__main__':
   plt.grid(True)
   plt.xlabel('Iterations', fontsize = 15)
   plt.ylabel('Return', fontsize = 15)
-
-  if method == "FD":
-    plt.title("FD ES {}".format(env_name), fontsize = 24)
-    plt.savefig("plots/FD ES {}".format(env_name))
-  elif method == "AT":
-    plt.title("AT ES {}".format(env_name), fontsize = 24)
-    plt.savefig("plots/AT ES {}".format(env_name))
-  else:
-    plt.title("Vanilla ES {}".format(env_name), fontsize = 24)
-    plt.savefig("plots/Vanilla ES {}".format(env_name))
+  
+  plt.title("{0} ES {1}".format(method, env_name), fontsize = 24)
+  plt.savefig("plots/{0} ES {1}".format(method, env_name))
+  
 
 
 # In[ ]:
