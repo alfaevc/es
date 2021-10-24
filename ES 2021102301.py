@@ -59,8 +59,8 @@ def orthogonal_epsilons(theta):
     Q, _ = np.linalg.qr(epsilons)#orthogonalize epsilons
     Q_normalize=np.copy(Q)
     for i in range(theta.size):#renormalize rows of Q by multiplying it by length of corresponding row of epsilons
-        norm=np.linalg.norm(epsilons[i])
-        Q_normalize[i]=Q_normalize[i]*norm
+      norm=np.linalg.norm(epsilons[i])
+      Q_normalize[i]=Q_normalize[i]*norm
     return Q_normalize@Q
 
 def hessian_gaussian_smoothing(theta, F, sigma=1, N=5):
@@ -69,7 +69,7 @@ def hessian_gaussian_smoothing(theta, F, sigma=1, N=5):
   second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
   hessian=np.zeros((theta.size,theta.size))
   for i in range(N):
-        hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
+    hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
   hessian-=np.identity(theta.size)*second_term
   return hessian
 
@@ -94,7 +94,7 @@ def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100):
   for i in range(max_epoch):
     accum_rewards[i] = F(theta)
     if i%50==0:
-        print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
+      print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     if method == "FD":
       theta += eta * FD_gradient(theta, F, N=N)
     elif method == "AT":

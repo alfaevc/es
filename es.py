@@ -65,6 +65,7 @@ def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100):
 """The cell below applies your CMA-ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
   env = gym.make('CartPole-v0')
+  env = gym.make('InvertedPendulumBulletEnv-v0')
   theta_dim = 5
   fn_with_env = functools.partial(rl_fn, env=env)
   num_seeds = 5
