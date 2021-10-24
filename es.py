@@ -5,7 +5,7 @@ import numpy as np
 """
 
 def vanilla_gradient(theta, F, sigma=1, N=100):
-  epsilons = np.random.standard_normal(size=(N, theta.size))
+  epsilons=orthogonal_epsilons(theta)
   fn = lambda x: F(theta + sigma * x) * x
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
 

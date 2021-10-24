@@ -36,10 +36,10 @@ if __name__ == '__main__':
   fn_with_env = gp.rl_fn
   num_seeds = 5
   # max_epoch = 151
-  max_epoch = 251
+  max_epoch = 201
   N = 5
   res = np.zeros((num_seeds, max_epoch))
-  method = "AT"
+  method = "FD"
 
   for k in tqdm.tqdm(range(num_seeds)):
     theta0 = np.random.standard_normal(size=theta_dim)
@@ -68,13 +68,13 @@ if __name__ == '__main__':
 
   if method == "FD":
     plt.title("FD ES {}".format(env_name), fontsize = 24)
-    plt.savefig("plots/FD ES.png")
+    plt.savefig("plots/FD ES {}".format(env_name))
   elif method == "AT":
     plt.title("AT ES {}".format(env_name), fontsize = 24)
-    plt.savefig("plots/AT ES.png")
+    plt.savefig("plots/AT ES {}".format(env_name))
   else:
     plt.title("Vanilla ES {}".format(env_name), fontsize = 24)
-    plt.savefig("plots/Vanilla ES.png")
+    plt.savefig("plots/Vanilla ES {}".format(env_name))
 
 
 # In[ ]:
