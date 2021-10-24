@@ -72,11 +72,11 @@ def hessian_gaussian_smoothing(theta, F, sigma=1, N=5):
   fn = lambda x: F(theta + sigma * x) 
   second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
   fn = lambda x: F(theta + sigma * x)*np.outer(x,x)/(N*sigma**2)
-  hessian = np.sum(np.array(list(map(fn, epsilons))), axis = 0)
+  hessian = np.sum(np.array(list(map(fn, epsilons))), axis = 0) - np.identity(theta.size)*second_term
   # hessian=np.zeros((theta.size,theta.size))
   # for i in range(N):
   #   hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
-  hessian -=np.identity(theta.size)*second_term
+  # hessian -=np.identity(theta.size)*second_term
   return hessian
 
 def choose_covariate(theta,F,sigma=1,N=theta.size):
