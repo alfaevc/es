@@ -23,23 +23,26 @@ import tqdm
 
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
-  env_name = 'InvertedPendulumBulletEnv-v0'
-  # env_name = 'CartPole-v0'
+  # env_name = 'InvertedPendulumBulletEnv-v0'
+  # env_name = 'FetchPush-v1'
+  env_name = 'HalfCheetah-v2'
+  # env_name = 'InvertedPendulumBulletEnv-v0'
   env = gym.make(env_name)
   state_dim = env.reset().size
   # theta_dim = state_dim + 1
-  theta_dim = (state_dim + 1) * 2
+  nA, = env.action_space.shape
+  theta_dim = (state_dim + 1) * 2 * nA
 
   # lp = policy.Log(env)
-  gp = policy.Gaus(env, state_dim)
+  gp = policy.Gaus(env, state_dim, nA=nA)
   # fn_with_env = functools.partial(rl_fn, env=env)
   fn_with_env = gp.rl_fn
   num_seeds = 5
   # max_epoch = 151
-  max_epoch = 201
+  max_epoch = 1001
   N = 5
   res = np.zeros((num_seeds, max_epoch))
-  method = "V"
+  method = "AT"
   print("The method is {}".format(method))
 
   for k in tqdm.tqdm(range(num_seeds)):

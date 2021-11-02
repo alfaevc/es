@@ -82,12 +82,12 @@ def gradascent_autoSwitch(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100
 def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100):
   theta = np.copy(theta0)
   sigma=1
-  choice, MSE_FD, MSE_AT=choose_covariate(theta,F,sigma,N=theta.size**2)
-  print('best method is: ',method,', MSE of FD is ',MSE_FD,', MSE OF AT is ', MSE_AT)
+  # choice, MSE_FD, MSE_AT=choose_covariate(theta,F,sigma,N=theta.size**2)
+  # print('best method is: ',method,', MSE of FD is ',MSE_FD,', MSE OF AT is ', MSE_AT)
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch): 
     accum_rewards[i] = F(theta)
-    if i%20==0:
+    if i%1==0:
       print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     
     if method == "FD":

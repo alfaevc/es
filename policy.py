@@ -16,7 +16,21 @@ class Log(object):
         a = np.random.choice(2, p=[p_left, 1 - p_left])
         return a
 
-    def rl_fn(self, theta):
+    def rl_fn(self, theta, gamma=0.99):
+        # START HIDE
+        done = False
+        s = self.env.reset()
+        total_reward = 0
+        discount = 1
+        while not done:
+          a = self.get_action(s, theta)
+          s, r, done, _ = self.env.step(a)
+          total_reward += discount * r
+          discount *= gamma
+        # END HIDE
+        return total_reward
+    
+    def evaluate(self, theta):
         # START HIDE
         done = False
         s = self.env.reset()
@@ -29,7 +43,7 @@ class Log(object):
         return total_reward
 
 class Gaus(object):
-    def __init__(self, env, state_dim, min_logvar=1, max_logvar=5, nA=1):
+    def __init__(self, env, state_dim, nA=1, min_logvar=0.1, max_logvar=0.5):
         self.env = env
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
@@ -51,16 +65,37 @@ class Gaus(object):
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return means, tf.exp(logvars).numpy()
     
-    def rl_fn(self, theta):
+    def rl_fn(self, theta, gamma=0.99, max_step=1e3):
         G = 0.0
         state = self.env.reset()
         done = False
+        a_dim = np.arange(self.nA)
+        discount = 1
         while not done:
             # WRITE CODE HERE
-            mv = np.array([theta[0] + state @ theta[1:self.state_dim+1], 
-                          theta[self.state_dim+1] + state @ theta[self.state_dim+2:]])
-            a_mean, a_v  = self.get_output(np.expand_dims(mv, 0))
-            action = np.random.multivariate_normal(a_mean[0], np.diag(a_v[0]))
+            fn = lambda a: [theta[2*a*(self.state_dim+1)] + state @ theta[2*a*(self.state_dim+1)+1: (2*a+1)*(self.state_dim+1)], 
+                            theta[(2*a+1)*(self.state_dim+1)] + state @ theta[(2*a+1)*(self.state_dim+1)+1: (2*a+2)*(self.state_dim+1)]]
+            mvs = np.array(list(map(fn, a_dim))).flatten()
+            a_mean, a_v  = self.get_output(np.expand_dims(mvs, 0))
+            action = np.random.normal(a_mean[0], a_v[0])
+
+            state, reward, done, _ = self.env.step(action)
+            G += reward * discount
+            discount *= gamma
+        return G
+    
+    def evaluate(self, theta):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        a_dim = np.arange(self.nA)
+        while not done:
+            # WRITE CODE HERE
+            fn = lambda a: [theta[2*a*(self.state_dim+1)] + state @ theta[2*a*(self.state_dim+1)+1: (2*a+1)*(self.state_dim+1)], 
+                            theta[(2*a+1)*(self.state_dim+1)] + state @ theta[(2*a+1)*(self.state_dim+1)+1: (2*a+2)*(self.state_dim+1)]]
+            mvs = np.array(list(map(fn, a_dim))).flatten()
+            a_mean, a_v  = self.get_output(np.expand_dims(mvs, 0))
+            action = np.random.normal(a_mean[0], a_v[0])
 
             state, reward, done, _ = self.env.step(action)
             G += reward
