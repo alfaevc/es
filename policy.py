@@ -43,7 +43,7 @@ class Log(object):
         return total_reward
 
 class Gaus(object):
-    def __init__(self, env, state_dim, nA=1, min_logvar=0.1, max_logvar=0.5):
+    def __init__(self, env, state_dim, nA, min_logvar=0.5, max_logvar=1):
         self.env = env
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
@@ -63,7 +63,7 @@ class Gaus(object):
         raw_vs = output[:, self.nA:]
         logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
-        return means, tf.exp(logvars).numpy()
+        return np.tanh(means), tf.exp(logvars).numpy()
     
     def rl_fn(self, theta, gamma=0.99, max_step=1e3):
         G = 0.0
@@ -71,7 +71,8 @@ class Gaus(object):
         done = False
         a_dim = np.arange(self.nA)
         discount = 1
-        while not done:
+        steps = 0
+        while not done and (steps < max_step):
             # WRITE CODE HERE
             fn = lambda a: [theta[2*a*(self.state_dim+1)] + state @ theta[2*a*(self.state_dim+1)+1: (2*a+1)*(self.state_dim+1)], 
                             theta[(2*a+1)*(self.state_dim+1)] + state @ theta[(2*a+1)*(self.state_dim+1)+1: (2*a+2)*(self.state_dim+1)]]
@@ -82,6 +83,7 @@ class Gaus(object):
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
             discount *= gamma
+            steps += 1
         return G
     
     def evaluate(self, theta):

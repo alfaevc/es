@@ -79,7 +79,7 @@ def gradascent_autoSwitch(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100
       theta += eta * vanilla_gradient(theta, F, N=N)
   return theta, accum_rewards
 
-def gradascent(theta0, F, method=None, eta=1e-2, max_epoch=200, N=100):
+def gradascent(theta0, F, method=None, eta=1e-3, max_epoch=200, N=100):
   theta = np.copy(theta0)
   sigma=1
   # choice, MSE_FD, MSE_AT=choose_covariate(theta,F,sigma,N=theta.size**2)
