@@ -34,9 +34,8 @@ if __name__ == '__main__':
   theta_dim = (state_dim + 1) * 2 * nA
 
   # lp = policy.Log(env)
-  gp = policy.Gaus(env, state_dim, nA=nA)
+  pi = policy.Gaus(env, state_dim, nA=nA)
   # fn_with_env = functools.partial(rl_fn, env=env)
-  fn_with_env = gp.rl_fn
   num_seeds = 5
   # max_epoch = 151
   max_epoch = 1001
@@ -54,7 +53,7 @@ if __name__ == '__main__':
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
   
-    theta, accum_rewards = es.gradascent(theta0, fn_with_env, eta=1e-3, method=method, max_epoch=max_epoch, N=N)
+    theta, accum_rewards = es.gradascent(theta0, pi, eta=1e-3, method=method, max_epoch=max_epoch, N=N)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
 
