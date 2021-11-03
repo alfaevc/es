@@ -65,7 +65,7 @@ class Gaus(object):
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return np.tanh(means), tf.exp(logvars).numpy()
     
-    def F(self, theta, gamma=0.99, max_step=1e3):
+    def F(self, theta, gamma=0.99, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
