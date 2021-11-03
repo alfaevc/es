@@ -81,6 +81,7 @@ if __name__ == '__main__':
     # print(np.array(list(map(fn, epsilons))))
   
     theta, accum_rewards = es.gradascent(theta0, pi, eta=5e-3, sigma=0.1, method=method, max_epoch=max_epoch, N=N)
+    test_video(pi, theta, env_name, method)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
 
