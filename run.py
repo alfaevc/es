@@ -3,8 +3,9 @@
 
 # In[ ]:
 
-
 # -*- coding: utf-8 -*-
+import os 
+import tqdm
 
 import numpy as np
 import es
@@ -13,14 +14,12 @@ import policy
 import matplotlib.pyplot as plt
 import gym
 import pybullet_envs
-import tqdm
 
 
 
 """### AT vs FD
 """
-
-
+  
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
   # env_name = 'InvertedPendulumBulletEnv-v0'
@@ -53,7 +52,7 @@ if __name__ == '__main__':
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
   
-    theta, accum_rewards = es.gradascent(theta0, pi, eta=1e-3, sigma=0.1, method=method, max_epoch=max_epoch, N=N)
+    theta, accum_rewards = es.gradascent(theta0, pi, eta=5e-3, sigma=0.1, method=method, max_epoch=max_epoch, N=N)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
 

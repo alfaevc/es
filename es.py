@@ -91,7 +91,7 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
     if method == "FD":
       theta += eta * FD_gradient(theta, policy, sigma, N=N)
     elif method == "AT":
-      theta += eta * AT_gradient(theta, policy, sigma,N=N)
+      theta += eta * AT_gradient(theta, policy, sigma, N=N)
     else: #vanilla
       theta += eta * vanilla_gradient(theta, policy, N=N)
   return theta, accum_rewards
