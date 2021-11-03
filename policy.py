@@ -126,7 +126,7 @@ class Gaus(object):
             a_mean, a_v  = self.get_output(np.expand_dims(mvs, 0))
             action = np.random.normal(a_mean[0], a_v[0])
 
-            state, reward, done, _ = self.env.step(action)
+            state, reward, done, _ = env.step(action)
             G += reward
       
 	    print("The return is {}".format(G))
