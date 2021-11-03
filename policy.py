@@ -43,7 +43,7 @@ class Log(object):
         return total_reward
 
 class Gaus(object):
-    def __init__(self, env, state_dim, nA, min_logvar=0.5, max_logvar=1):
+    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=5):
         self.env = env
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
@@ -63,22 +63,23 @@ class Gaus(object):
         raw_vs = output[:, self.nA:]
         logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
-        return np.tanh(means), tf.exp(logvars).numpy()
+        return means, tf.exp(logvars).numpy()
 
-    def F(self, theta, gamma=0.99, max_step=1e4):
+    def F(self, theta, gamma=.99, max_step=5e3):
         G = 0.0
         state = self.env.reset()
         done = False
         a_dim = np.arange(self.nA)
         discount = 1
         steps = 0
-        while not done and (steps < max_step):
+        while not done:
+        # while not done and (steps < max_step):
             # WRITE CODE HERE
             fn = lambda a: [theta[2*a*(self.state_dim+1)] + state @ theta[2*a*(self.state_dim+1)+1: (2*a+1)*(self.state_dim+1)], 
                             theta[(2*a+1)*(self.state_dim+1)] + state @ theta[(2*a+1)*(self.state_dim+1)+1: (2*a+2)*(self.state_dim+1)]]
             mvs = np.array(list(map(fn, a_dim))).flatten()
             a_mean, a_v  = self.get_output(np.expand_dims(mvs, 0))
-            action = np.random.normal(a_mean[0], a_v[0])
+            action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
 
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
@@ -97,7 +98,7 @@ class Gaus(object):
                             theta[(2*a+1)*(self.state_dim+1)] + state @ theta[(2*a+1)*(self.state_dim+1)+1: (2*a+2)*(self.state_dim+1)]]
             mvs = np.array(list(map(fn, a_dim))).flatten()
             a_mean, a_v  = self.get_output(np.expand_dims(mvs, 0))
-            action = np.random.normal(a_mean[0], a_v[0])
+            action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
 
             state, reward, done, _ = self.env.step(action)
             G += reward

@@ -62,7 +62,7 @@ def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch): 
-    accum_rewards[i] = policy.F(theta)
+    accum_rewards[i] = policy.evaluate(theta)
     if i%20==0:
       print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
       #update method every 20 iterations
@@ -72,7 +72,7 @@ def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_
     
     if method == "AT":
       theta += eta * AT_gradient(theta, policy, sigma, N=N)
-    else:
+    elif method == "FD":
       theta += eta * FD_gradient(theta, policy, sigma, N=N)   
     else: #vanilla
       theta += eta * vanilla_gradient(theta, policy, sigma, N=N)

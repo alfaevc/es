@@ -24,29 +24,29 @@ def test_video(policy, theta, env_name, method):
         		# Usage: 
 		# 	you can pass the arguments within agent.train() as:
 		# 		if episode % int(self.num_episodes/3) == 0:
-	    #       	test_video(self, self.environment_name, episode)
-	    save_path = "./videos-%s-%s" % (env_name, method)
-	    if not os.path.exists(save_path):
-	        os.mkdir(save_path)
-	    # To create video
-	    env = gym.wrappers.Monitor(policy.env, save_path, force=True)
-      G = 0.0
-      state = env.reset()
-      done = False
-      a_dim = np.arange(self.nA)
-      while not done:
-          # WRITE CODE HERE
-          env.render()
-          fn = lambda a: [theta[2*a*(policy.state_dim+1)] + state @ theta[2*a*(policy.state_dim+1)+1: (2*a+1)*(policy.state_dim+1)], 
-                          theta[(2*a+1)*(policy.state_dim+1)] + state @ theta[(2*a+1)*(policy.state_dim+1)+1: (2*a+2)*(policy.state_dim+1)]]
-          mvs = np.array(list(map(fn, a_dim))).flatten()
-          a_mean, a_v  = policy.get_output(np.expand_dims(mvs, 0))
-          action = np.random.normal(a_mean[0], a_v[0])
+    #       	test_video(self, self.environment_name, episode)
+    save_path = "./videos-%s-%s" % (env_name, method)
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    # To create video
+    env = gym.wrappers.Monitor(policy.env, save_path, force=True)
+    G = 0.0
+    state = env.reset()
+    done = False
+    a_dim = np.arange(policy.nA)
+    while not done:
+        # WRITE CODE HERE
+        env.render()
+        fn = lambda a: [theta[2*a*(policy.state_dim+1)] + state @ theta[2*a*(policy.state_dim+1)+1: (2*a+1)*(policy.state_dim+1)], 
+                        theta[(2*a+1)*(policy.state_dim+1)] + state @ theta[(2*a+1)*(policy.state_dim+1)+1: (2*a+2)*(policy.state_dim+1)]]
+        mvs = np.array(list(map(fn, a_dim))).flatten()
+        a_mean, a_v  = policy.get_output(np.expand_dims(mvs, 0))
+        action = np.random.normal(a_mean[0], a_v[0])
 
-          state, reward, done, _ = env.step(action)
-          G += reward
-      
-	    print("The return is {}".format(G))
+        state, reward, done, _ = env.step(action)
+        G += reward
+    
+    print("The return is {}".format(G))
   
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
@@ -73,6 +73,7 @@ if __name__ == '__main__':
 
   for k in tqdm.tqdm(range(num_seeds)):
     theta0 = np.random.standard_normal(size=theta_dim)
+    # test_video(pi, theta0, env_name, method)
 
     # epsilons = np.random.multivariate_normal(np.zeros(5), np.identity(5), size=2)
     # print(epsilons)
@@ -80,7 +81,7 @@ if __name__ == '__main__':
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
   
-    theta, accum_rewards = es.gradascent(theta0, pi, eta=5e-3, sigma=0.1, method=method, max_epoch=max_epoch, N=N)
+    theta, accum_rewards = es.gradascent(theta0, pi, eta=1e-2, sigma=0.1, method=method, max_epoch=max_epoch, N=N)
     test_video(pi, theta, env_name, method)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
