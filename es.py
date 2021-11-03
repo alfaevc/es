@@ -66,14 +66,14 @@ def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_
     if i%20==0:
       print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
       #update method every 20 iterations
-      choice, MSE_FD, MSE_AT=choose_covariate(theta,policy,sigma,N=theta.size**2)
+      choice, MSE_FD, MSE_AT = choose_covariate(theta,policy,sigma,N=theta.size**2)
       method=choice
-      print("method updated to: ",method,', MSE of FD is ',MSE_FD,', MSE OF AT is ', MSE_AT)    
+      print("method updated to: ", method,', MSE of FD is ', MSE_FD,', MSE OF AT is ', MSE_AT)    
     
-    if method == "FD":
-      theta += eta * FD_gradient(theta, policy, sigma, N=N)
-    elif method == "AT":
+    if method == "AT":
       theta += eta * AT_gradient(theta, policy, sigma, N=N)
+    else:
+      theta += eta * FD_gradient(theta, policy, sigma, N=N)   
     else: #vanilla
       theta += eta * vanilla_gradient(theta, policy, sigma, N=N)
   return theta, accum_rewards
@@ -88,10 +88,10 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
     if i%1==0:
       print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     
-    if method == "FD":
-      theta += eta * FD_gradient(theta, policy, sigma, N=N)
-    elif method == "AT":
+    if method == "AT":
       theta += eta * AT_gradient(theta, policy, sigma, N=N)
+    elif method == "FD":
+      theta += eta * FD_gradient(theta, policy, sigma, N=N)
     else: #vanilla
       theta += eta * vanilla_gradient(theta, policy, N=N)
   return theta, accum_rewards
