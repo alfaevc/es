@@ -80,8 +80,8 @@ if __name__ == '__main__':
     # fn = lambda x: fn_with_env(theta0 + x) * x
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
-  
-    theta, accum_rewards = es.gradascent(theta0, pi, eta=1e-2, sigma=0.1, method=method, max_epoch=max_epoch, N=N)
+    theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=5e-3, max_epoch=max_epoch, N=N)
+    # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=5e-3, max_epoch=max_epoch, N=N)
     test_video(pi, theta, env_name, method)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)

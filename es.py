@@ -63,7 +63,7 @@ def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=5e-3, max_
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch): 
     accum_rewards[i] = policy.evaluate(theta)
-    if i%20==0:
+    if i%10==0:
       print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
       #update method every 20 iterations
       choice, MSE_FD, MSE_AT = choose_covariate(theta,policy,sigma,N=theta.size**2)
@@ -76,7 +76,7 @@ def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=5e-3, max_
       theta += eta * FD_gradient(theta, policy, sigma, N=N)   
     else: #vanilla
       theta += eta * vanilla_gradient(theta, policy, sigma, N=N)
-  return theta, accum_rewards
+  return theta, accum_rewards, method
 
 def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
   theta = np.copy(theta0)
@@ -84,7 +84,7 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
   for i in range(max_epoch): 
     accum_rewards[i] = policy.evaluate(theta)
     if i%1==0:
-      print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
+      print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
     
     if method == "AT":
       theta += eta * AT_gradient(theta, policy, sigma, N=N)
