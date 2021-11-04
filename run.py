@@ -63,9 +63,9 @@ if __name__ == '__main__':
   # lp = policy.Log(env)
   pi = policy.Gaus(env, state_dim, nA=nA)
   # fn_with_env = functools.partial(rl_fn, env=env)
-  num_seeds = 5
+  num_seeds = 1
   # max_epoch = 151
-  max_epoch = 1001
+  max_epoch = 401
   N = 5
   res = np.zeros((num_seeds, max_epoch))
   method = "AT"
