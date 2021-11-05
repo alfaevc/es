@@ -24,13 +24,16 @@ import tqdm
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
   env_name = 'HalfCheetah-v2'
+  env_name = 'Swimmer-v2'
   # env_name = 'CartPole-v0'
   env = gym.make(env_name)
   state = env.reset()
   print(state.size)
-  n, = env.action_space.shape
+  a = env.action_space
+  print(a)
+  n, = a.shape
   print(n)
-  a = np.array([2,2,2,2,2,2])
+  a = np.ones(n)
   s, r, done, _ = env.step(a)
   print("The next state is {}, reward is {}, the termination status is {}".format(s, r, done))
   print()

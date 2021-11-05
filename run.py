@@ -52,7 +52,8 @@ def test_video(policy, theta, env_name, method):
 if __name__ == '__main__':
   # env_name = 'InvertedPendulumBulletEnv-v0'
   # env_name = 'FetchPush-v1'
-  env_name = 'HalfCheetah-v2'
+  # env_name = 'HalfCheetah-v2'
+  env_name = 'Swimmer-v2'
   # env_name = 'InvertedPendulumBulletEnv-v0'
   env = gym.make(env_name)
   state_dim = env.reset().size
@@ -63,10 +64,10 @@ if __name__ == '__main__':
   # lp = policy.Log(env)
   pi = policy.Gaus(env, state_dim, nA=nA)
   # fn_with_env = functools.partial(rl_fn, env=env)
-  num_seeds = 1
+  num_seeds = 5
   # max_epoch = 151
-  max_epoch = 401
-  N = 5
+  max_epoch = 201
+  N = 10
   res = np.zeros((num_seeds, max_epoch))
   method = "AT"
   print("The method is {}".format(method))
@@ -74,15 +75,15 @@ if __name__ == '__main__':
   for k in tqdm.tqdm(range(num_seeds)):
     theta0 = np.random.standard_normal(size=theta_dim)
     # test_video(pi, theta0, env_name, method)
-
     # epsilons = np.random.multivariate_normal(np.zeros(5), np.identity(5), size=2)
     # print(epsilons)
     # fn = lambda x: fn_with_env(theta0 + x) * x
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
     # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=5e-3, max_epoch=max_epoch, N=N)
-    theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=5e-3, max_epoch=max_epoch, N=N)
+    theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
     test_video(pi, theta, env_name, method)
+    # theta, accum_rewards = es.gradascent(theta, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
 
