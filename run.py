@@ -41,7 +41,7 @@ def test_video(policy, theta, env_name, method):
                         theta[(2*a+1)*(policy.state_dim+1)] + state @ theta[(2*a+1)*(policy.state_dim+1)+1: (2*a+2)*(policy.state_dim+1)]]
         mvs = np.array(list(map(fn, a_dim))).flatten()
         a_mean, a_v  = policy.get_output(np.expand_dims(mvs, 0))
-        action = np.random.normal(a_mean[0], a_v[0])
+        action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
 
         state, reward, done, _ = env.step(action)
         G += reward
@@ -66,7 +66,7 @@ if __name__ == '__main__':
   # fn_with_env = functools.partial(rl_fn, env=env)
   num_seeds = 5
   # max_epoch = 151
-  max_epoch = 201
+  max_epoch = 401
   N = theta_dim
   res = np.zeros((num_seeds, max_epoch))
   method = "AT"

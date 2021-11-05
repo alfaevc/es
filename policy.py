@@ -43,7 +43,7 @@ class Log(object):
         return total_reward
 
 class Gaus(object):
-    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=3):
+    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=5):
         self.env = env
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
@@ -65,7 +65,7 @@ class Gaus(object):
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return means, tf.exp(logvars).numpy()
 
-    def F(self, theta, gamma=.99, max_step=5e3):
+    def F(self, theta, gamma=1, max_step=5e3):
         G = 0.0
         state = self.env.reset()
         done = False
@@ -80,6 +80,7 @@ class Gaus(object):
             mvs = np.array(list(map(fn, a_dim))).flatten()
             a_mean, a_v  = self.get_output(np.expand_dims(mvs, 0))
             action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+            # action = np.random.normal(a_mean[0], a_v[0])
 
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
@@ -99,6 +100,7 @@ class Gaus(object):
             mvs = np.array(list(map(fn, a_dim))).flatten()
             a_mean, a_v  = self.get_output(np.expand_dims(mvs, 0))
             action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+            # action = np.random.normal(a_mean[0], a_v[0])
 
             state, reward, done, _ = self.env.step(action)
             G += reward
