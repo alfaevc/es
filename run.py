@@ -67,7 +67,7 @@ if __name__ == '__main__':
   num_seeds = 5
   # max_epoch = 151
   max_epoch = 201
-  N = 10
+  N = theta_dim
   res = np.zeros((num_seeds, max_epoch))
   method = "AT"
   print("The method is {}".format(method))

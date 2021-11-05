@@ -38,7 +38,7 @@ def orthogonal_epsilons(N,dim):
     return epsilons_N
 
 def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
-  epsilons = orthogonal_epsilons(N,dim)
+  epsilons = orthogonal_epsilons(N,theta.size)
   fn = lambda x: policy.F(theta + sigma * x) 
   second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
   fn = lambda x: policy.F(theta + sigma * x)*np.outer(x,x)/(N*sigma**2)
