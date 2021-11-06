@@ -69,7 +69,7 @@ if __name__ == '__main__':
   max_epoch = 301
   N = theta_dim
   res = np.zeros((num_seeds, max_epoch))
-  method = "AT"
+  method = "FD"
   print("The method is {}".format(method))
 
   for k in tqdm.tqdm(range(num_seeds)):
