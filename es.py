@@ -13,7 +13,12 @@ def FD_gradient(theta, policy, sigma=1, N=100):
   # epsilons = np.random.standard_normal(size=(N, theta.size))
   a=policy.F(theta)
   epsilons=orthogonal_epsilons(N,theta.size)
+<<<<<<< HEAD
   fn = lambda x: (policy.F(theta + sigma * x) - a) * x
+=======
+  G = policy.F(theta)
+  fn = lambda x: (policy.F(theta + sigma * x) - G) * x
+>>>>>>> ffdb89f73b2f32c4faccc150858d449e59657176
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
 
 def AT_gradient(theta, policy, sigma=1, N=100):
@@ -42,10 +47,6 @@ def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
   epsilons = orthogonal_epsilons(N,theta.size)
   fn = lambda x: (np.outer(x,x)- np.identity(theta.size))*policy.F(theta + sigma * x)/(sigma**2)
   hessian = np.mean(np.array(list(map(fn, epsilons))), axis=0) 
-  #hessian=np.zeros((theta.size,theta.size))
-  #for i in range(N):
-  #  hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
-  #hessian -=np.identity(theta.size)*second_term
   return hessian
 
 def choose_covariate(theta,policy,sigma=1,N=100):
@@ -55,10 +56,8 @@ def choose_covariate(theta,policy,sigma=1,N=100):
     MSE_FD=np.copy(MSE_AT)
     MSE_FD+=((N+4)*sigma**4/(4*N))*np.linalg.norm(hessian, ord='fro')**2
     MSE_FD+=(2.5*sigma**4/N)*np.diagonal(hessian)@np.diagonal(hessian)
-    choice="AT"
-    if (2*N/(N+1))*MSE_AT>MSE_FD:
-      choice="FD"
-    return choice,MSE_FD,MSE_AT
+    choice = "AT" if (2*N/(N+1))*MSE_AT > MSE_FD else "FD"
+    return choice, MSE_FD, MSE_AT
     
     
 def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_epoch=200, N=100):

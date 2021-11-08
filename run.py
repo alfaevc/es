@@ -65,7 +65,7 @@ if __name__ == '__main__':
   # fn_with_env = functools.partial(rl_fn, env=env)
   num_seeds = 5
   # max_epoch = 151
-  max_epoch = 301
+  max_epoch = 251
   N = theta_dim
   res = np.zeros((num_seeds, max_epoch))
   method = "AT"

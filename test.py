@@ -38,12 +38,10 @@ if __name__ == '__main__':
   s, r, done, _ = env.step(a)
   print("The next state is {}, reward is {}, the termination status is {}".format(s, r, done))
   # theta_dim = state_dim + 1
-
+  x = np.array([(1,np.array([2,3])),(4,np.array([5,6]))])
+  print(np.mean(list(map(list, zip(*x)))[1], axis = 1).size)
 
 # In[ ]:
-
-
-
 
 
 # In[ ]:
