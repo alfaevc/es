@@ -12,7 +12,8 @@ def vanilla_gradient(theta, policy, sigma=1, N=100):
 def FD_gradient(theta, policy, sigma=1, N=100):
   # epsilons = np.random.standard_normal(size=(N, theta.size))
   epsilons=orthogonal_epsilons(N,theta.size)
-  fn = lambda x: (policy.F(theta + sigma * x) - policy.F(theta)) * x
+  G = policy.F(theta)
+  fn = lambda x: (policy.F(theta + sigma * x) - G) * x
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
 
 def AT_gradient(theta, policy, sigma=1, N=100):
@@ -39,10 +40,14 @@ def orthogonal_epsilons(N,dim):
 
 def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
   epsilons = orthogonal_epsilons(N,theta.size)
-  fn = lambda x: policy.F(theta + sigma * x) 
-  second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
-  fn = lambda x: policy.F(theta + sigma * x)*np.outer(x,x)/(N*sigma**2)
-  hessian = np.sum(np.array(list(map(fn, epsilons))), axis=0) - np.identity(theta.size)*second_term
+  # fn = lambda x: policy.F(theta + sigma * x) 
+  # second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
+  # fn = lambda x: policy.F(theta + sigma * x) * np.outer(x,x)/(N*sigma**2)
+  fn = lambda x: (policy.F(theta + sigma * x), x)
+  tuples = list(map(fn, epsilons))
+  second_term = np.mean(list(map(list, zip(*tuples)))[1], axis=0)/(sigma**2)
+  fn = lambda g, x: g * np.outer(x,x)/(N*sigma**2)
+  hessian = np.sum(np.array(list(map(fn, tuples))), axis=0) - np.identity(theta.size)*second_term
   #hessian=np.zeros((theta.size,theta.size))
   #for i in range(N):
   #  hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
@@ -56,10 +61,8 @@ def choose_covariate(theta,policy,sigma=1,N=100):
     MSE_FD=np.copy(MSE_AT)
     MSE_FD+=((N+4)*sigma**4/(4*N))*np.linalg.norm(hessian, ord='fro')**2
     MSE_FD+=(2.5*sigma**4/N)*np.diagonal(hessian)@np.diagonal(hessian)
-    choice="AT"
-    if (2*N/(N+1))*MSE_AT>MSE_FD:
-      choice="FD"
-    return choice,MSE_FD,MSE_AT
+    choice = "AT" if (2*N/(N+1))*MSE_AT > MSE_FD else "FD"
+    return choice, MSE_FD, MSE_AT
     
     
 def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_epoch=200, N=100):
