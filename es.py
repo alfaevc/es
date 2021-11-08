@@ -42,7 +42,7 @@ def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
   fn = lambda x: policy.F(theta + sigma * x) 
   second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
   fn = lambda x: policy.F(theta + sigma * x)*np.outer(x,x)/(N*sigma**2)
-  hessian = np.sum(np.array(list(map(fn, epsilons))), axis = 0) - np.identity(theta.size)*second_term
+  hessian = np.sum(np.array(list(map(fn, epsilons))), axis=0) - np.identity(theta.size)*second_term
   #hessian=np.zeros((theta.size,theta.size))
   #for i in range(N):
   #  hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
@@ -65,11 +65,11 @@ def choose_covariate(theta,policy,sigma=1,N=100):
 def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_epoch=200, N=100):
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
-  for i in range(max_epoch): 
+  for i in range(max_epoch):
     accum_rewards[i] = policy.evaluate(theta)
     print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     if i%10==0:#update method every 20 iterations
-      choice, MSE_FD, MSE_AT = choose_covariate(theta,policy,sigma,N=theta.size*20)
+      choice, MSE_FD, MSE_AT = choose_covariate(theta,policy,sigma,N=theta.size*5)
       method=choice
       print("method updated to: ", method,', MSE of FD is ', MSE_FD,', MSE OF AT is ', MSE_AT)    
     

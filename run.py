@@ -50,7 +50,6 @@ def test_video(policy, theta, env_name, method):
   
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
-  # env_name = 'InvertedPendulumBulletEnv-v0'
   # env_name = 'FetchPush-v1'
   # env_name = 'HalfCheetah-v2'
   env_name = 'Swimmer-v2'
@@ -66,10 +65,10 @@ if __name__ == '__main__':
   # fn_with_env = functools.partial(rl_fn, env=env)
   num_seeds = 5
   # max_epoch = 151
-  max_epoch = 251
+  max_epoch = 301
   N = theta_dim
   res = np.zeros((num_seeds, max_epoch))
-  method = "FD"
+  method = "AT"
   print("The method is {}".format(method))
 
   for k in tqdm.tqdm(range(num_seeds)):
@@ -80,10 +79,9 @@ if __name__ == '__main__':
     # fn = lambda x: fn_with_env(theta0 + x) * x
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
-    # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=5e-3, max_epoch=max_epoch, N=N)
-    theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-    test_video(pi, theta, env_name, method)
-    # theta, accum_rewards = es.gradascent(theta, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
+    theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
+    # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N)
+    # test_video(pi, theta, env_name, method)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
 
@@ -91,6 +89,8 @@ if __name__ == '__main__':
   maxs = np.max(res, axis=0)
   mins = np.min(res, axis=0)
   
+  method = "mixed"
+
   plt.fill_between(ns, mins, maxs, alpha=0.1)
   plt.plot(ns, avs, '-o', markersize=1, label='return')
 
