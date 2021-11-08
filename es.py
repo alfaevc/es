@@ -50,12 +50,12 @@ def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
   return hessian
 
 def choose_covariate(theta,policy,sigma=1,N=100):
-    grad=vanilla_gradient(theta, policy, sigma=1, N=N)
-    hessian=hessian_gaussian_smoothing(theta, policy, sigma=1, N=N)
+    grad=vanilla_gradient(theta, policy, sigma=sigma, N=N)
+    hessian=hessian_gaussian_smoothing(theta, policy, sigma=sigma, N=N)
     MSE_AT=(np.linalg.norm(grad)**2)/N
     MSE_FD=np.copy(MSE_AT)
-    MSE_FD+=((N+4)*sigma**2/(4*N))*np.linalg.norm(hessian, ord='fro')**2
-    MSE_FD+=(2.5*sigma**2/N)*np.diagonal(hessian)@np.diagonal(hessian)
+    MSE_FD+=((N+4)*sigma**4/(4*N))*np.linalg.norm(hessian, ord='fro')**2
+    MSE_FD+=(2.5*sigma**4/N)*np.diagonal(hessian)@np.diagonal(hessian)
     choice="AT"
     if (2*N/(N+1))*MSE_AT>MSE_FD:
       choice="FD"
