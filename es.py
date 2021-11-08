@@ -50,7 +50,8 @@ def choose_covariate(theta,policy,sigma=1,N=100):
     MSE_AT=(np.linalg.norm(grad)**2)/N
     MSE_FD=np.copy(MSE_AT)
     MSE_FD+=((N+4)*sigma**4/(4*N))*np.linalg.norm(hessian, ord='fro')**2
-    MSE_FD+=(2.5*sigma**4/N)*np.diagonal(hessian)@np.diagonal(hessian)
+    diag_hess = np.diagonal(hessian)
+    MSE_FD+=(2.5*sigma**4/N) * diag_hess@diag_hess
     choice = "AT" if (2*N/(N+1))*MSE_AT > MSE_FD else "FD"
     return choice, MSE_FD, MSE_AT
     
