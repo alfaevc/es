@@ -11,8 +11,9 @@ def vanilla_gradient(theta, policy, sigma=1, N=100):
 
 def FD_gradient(theta, policy, sigma=1, N=100):
   # epsilons = np.random.standard_normal(size=(N, theta.size))
+  a=policy.F(theta)
   epsilons=orthogonal_epsilons(N,theta.size)
-  fn = lambda x: (policy.F(theta + sigma * x) - policy.F(theta)) * x
+  fn = lambda x: (policy.F(theta + sigma * x) - a) * x
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
 
 def AT_gradient(theta, policy, sigma=1, N=100):
@@ -39,10 +40,8 @@ def orthogonal_epsilons(N,dim):
 
 def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
   epsilons = orthogonal_epsilons(N,theta.size)
-  fn = lambda x: policy.F(theta + sigma * x) 
-  second_term=np.mean(np.array(list(map(fn, epsilons))), axis=0)/(sigma**2)
-  fn = lambda x: policy.F(theta + sigma * x)*np.outer(x,x)/(N*sigma**2)
-  hessian = np.sum(np.array(list(map(fn, epsilons))), axis=0) - np.identity(theta.size)*second_term
+  fn = lambda x: (np.outer(x,x)- np.identity(theta.size))*policy.F(theta + sigma * x)/(sigma**2)
+  hessian = np.mean(np.array(list(map(fn, epsilons))), axis=0) 
   #hessian=np.zeros((theta.size,theta.size))
   #for i in range(N):
   #  hessian+=F(theta + sigma * epsilons[i])*np.outer(epsilons[i],epsilons[i])/(N*sigma**2)
@@ -50,7 +49,7 @@ def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
   return hessian
 
 def choose_covariate(theta,policy,sigma=1,N=100):
-    grad=vanilla_gradient(theta, policy, sigma=sigma, N=N)
+    grad=AT_gradient(theta, policy, sigma=sigma, N=2*N)
     hessian=hessian_gaussian_smoothing(theta, policy, sigma=sigma, N=N)
     MSE_AT=(np.linalg.norm(grad)**2)/N
     MSE_FD=np.copy(MSE_AT)
