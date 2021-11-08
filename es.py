@@ -11,14 +11,9 @@ def vanilla_gradient(theta, policy, sigma=1, N=100):
 
 def FD_gradient(theta, policy, sigma=1, N=100):
   # epsilons = np.random.standard_normal(size=(N, theta.size))
-  a=policy.F(theta)
   epsilons=orthogonal_epsilons(N,theta.size)
-<<<<<<< HEAD
-  fn = lambda x: (policy.F(theta + sigma * x) - a) * x
-=======
   G = policy.F(theta)
   fn = lambda x: (policy.F(theta + sigma * x) - G) * x
->>>>>>> ffdb89f73b2f32c4faccc150858d449e59657176
   return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
 
 def AT_gradient(theta, policy, sigma=1, N=100):
