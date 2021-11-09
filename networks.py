@@ -25,35 +25,39 @@ class NN(tf.keras.Model):
     return x 
   
   def theta2nnparams(self, theta, input_dim, output_dim):
-      params = []
-      end_index = input_dim * self.ls[0]
-      params.append(theta[:end_index].reshape((input_dim, self.ls[0])))
-      start_index = end_index
-      for i in range(len(self.ls)-1):
-        end_index += self.ls[i]
-        params.append(theta[start_index:end_index])
-        start_index = end_index
-        end_index += self.ls[self.ls[i] * self.ls[i+1]]
-        params.append(theta[start_index:end_index].reshape(self.ls[i], self.ls[i+1]))
-        start_index = end_index
-      
-      end_index += self.ls[-1]
+    params = []
+    end_index = input_dim * self.ls[0]
+    params.append(theta[:end_index].reshape((input_dim, self.ls[0])))
+    start_index = end_index
+    for i in range(len(self.ls)-1):
+      end_index += self.ls[i]
       params.append(theta[start_index:end_index])
       start_index = end_index
-      end_index += self.ls[self.ls[-1] * output_dim]
-      params.append(theta[start_index:end_index].reshape(self.ls[-1], output_dim))
-      params.append(theta[-output_dim:])
+      end_index += self.ls[self.ls[i] * self.ls[i+1]]
+      params.append(theta[start_index:end_index].reshape(self.ls[i], self.ls[i+1]))
+      start_index = end_index
+    
+    end_index += self.ls[-1]
+    params.append(theta[start_index:end_index])
+    start_index = end_index
+    end_index += self.ls[self.ls[-1] * output_dim]
+    params.append(theta[start_index:end_index].reshape(self.ls[-1], output_dim))
+    params.append(theta[-output_dim:])
 
-      assert theta.size == end_index + output_dim
+    assert theta.size == end_index + output_dim
 
-      return params
+    return params
 
   def nnparams2theta(self):
-      theta = []
-      for p in self.trainable_weights:
-        theta.append(p.reshape(-1))
-      theta = np.concatenate(tuple(theta))
-      return theta
+    theta = []
+    for p in self.trainable_weights:
+      theta.append(p.numpy().reshape(-1))
+    theta = np.concatenate(tuple(theta))
+    return theta
+  
+  def update_params(self, new_params):
+    for i in range(len(new_params)):
+      self.trainable_weights[i].assign(new_params[i])
   
 
   

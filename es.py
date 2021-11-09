@@ -90,12 +90,5 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
       theta += eta * vanilla_gradient(theta, policy, N=N)
   return theta, accum_rewards
 
-def nnparams2theta(params, theta_dim):
-    theta = []
-    for p in params:
-      theta.append(p.reshape(-1))
-    theta = np.concatenate(tuple(theta))
-    assert theta.size == theta_dim
-    return theta
 
 
