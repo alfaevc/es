@@ -13,8 +13,9 @@ import policy
 import matplotlib.pyplot as plt
 import gym
 import pybullet_envs
-import tqdm
+from networks import NN
 
+import tensorflow as tf
 
 
 """### AT vs FD
@@ -38,8 +39,24 @@ if __name__ == '__main__':
   s, r, done, _ = env.step(a)
   print("The next state is {}, reward is {}, the termination status is {}".format(s, r, done))
   # theta_dim = state_dim + 1
-  x = np.array([(1,np.array([2,3])),(4,np.array([5,6]))])
-  print(np.mean(list(map(list, zip(*x)))[1], axis = 1).size)
+  # x = np.array([(1,np.array([2,3])),(4,np.array([5,6]))])
+  # print(np.mean(list(map(list, zip(*x)))[1], axis = 1).size)
+
+  # for param, target_param in zip(self.critic.trainable_weights, self.critic_target.trainable_weights):
+  #     target_param.assign(self.tau * param.numpy() + (1 - self.tau) * target_param.numpy())
+  N = 10
+
+  actor = NN(n)
+  actor_lr = 1e-4
+  actor_optimizer = tf.keras.optimizers.Adam(learning_rate=actor_lr)
+  actor_loss = tf.keras.losses.MeanSquaredError()
+  actor.compile(optimizer=actor_optimizer, loss=actor_loss)
+
+  actor.fit(np.random.standard_normal((N,state.size+n)), np.random.standard_normal((N,n)), epochs=1, batch_size=N, verbose=0)
+
+  # print(actor.trainable_weights)
+  for param in actor.trainable_weights:
+      print(param.shape)
 
 # In[ ]:
 
