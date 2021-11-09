@@ -113,6 +113,8 @@ def theta2nnparams(theta, input_dim, output_dim, layers=[16,16]):
 
     assert theta.size == end_index + output_dim
 
+    return params
+
 def nnparams2theta(params, theta_dim):
     theta = []
     for p in params:
