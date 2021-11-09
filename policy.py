@@ -87,7 +87,7 @@ class Gaus(object):
             discount *= gamma
             steps += 1
         return G
-    
+
     def evaluate(self, theta):
         G = 0.0
         state = self.env.reset()
@@ -105,7 +105,42 @@ class Gaus(object):
             state, reward, done, _ = self.env.step(action)
             G += reward
         return G
-        
+
+
+    def nnF(self, nn, gamma=1, max_step=5e3):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        a_dim = np.arange(self.nA)
+        discount = 1
+        steps = 0
+        while not done:
+        # while not done and (steps < max_step):
+            a_mean, a_v  = self.get_output(nn(np.expand_dims(state, 0)).numpy())
+            action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+            # action = np.random.normal(a_mean[0], a_v[0])
+
+            state, reward, done, _ = self.env.step(action)
+            G += reward * discount
+            discount *= gamma
+            steps += 1
+        return G
+    
+    def nneval(self, nn, max_step=5e3):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        a_dim = np.arange(self.nA)
+        while not done:
+        # while not done and (steps < max_step):
+            a_mean, a_v  = self.get_output(nn(np.expand_dims(state, 0)).numpy())
+            action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+            # action = np.random.normal(a_mean[0], a_v[0])
+
+            state, reward, done, _ = self.env.step(action)
+            G += reward
+
+        return G
 
 
 
