@@ -58,6 +58,15 @@ if __name__ == '__main__':
   for param in actor.trainable_weights:
       print(param.shape)
 
+  arr = np.array([1, 2, 3, 4, 5, 6, 7, 8])
+
+  A = arr.reshape((2,4))
+  print(A)
+
+  print(A.reshape(-1))
+
+  print(np.concatenate(tuple([arr, arr[:3], arr[4:8]])))
+
 # In[ ]:
 
 

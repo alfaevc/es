@@ -91,5 +91,34 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
   return theta, accum_rewards
 
 
+def theta2nnparams(theta, input_dim, output_dim, layers=[16,16]):
+    params = []
+    end_index = input_dim * layers[0]
+    params.append(theta[:end_index].reshape((input_dim, layers[0])))
+    start_index = end_index
+    for i in range(len(layers)-1):
+      end_index += layers[i]
+      params.append(theta[start_index:end_index])
+      start_index = end_index
+      end_index += layers[layers[i] * layers[i+1]]
+      params.append(theta[start_index:end_index].reshape(layers[i], layers[i+1]))
+      start_index = end_index
+    
+    end_index += layers[-1]
+    params.append(theta[start_index:end_index])
+    start_index = end_index
+    end_index += layers[layers[-1] * output_dim]
+    params.append(theta[start_index:end_index].reshape(layers[-1], output_dim))
+    params.append(theta[-output_dim:])
+
+    assert theta.size == end_index + output_dim
+
+def nnparams2theta(params, theta_dim):
+    theta = []
+    for p in params:
+      theta.append(p.reshape(-1))
+    theta = np.concatenate(tuple(theta))
+    assert theta.size == theta_dim
+    return theta
 
 
