@@ -54,6 +54,7 @@ if __name__ == '__main__':
 
   actor.fit(np.random.standard_normal((N,state.size+n)), np.random.standard_normal((N,n)), epochs=1, batch_size=N, verbose=0)
 
+  print(type(actor.trainable_weights))
   # print(actor.trainable_weights)
   for param in actor.trainable_weights:
       print(param.shape)
