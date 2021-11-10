@@ -43,7 +43,7 @@ class Log(object):
         return total_reward
 
 class Gaus(object):
-    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=5):
+    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=3):
         self.env = env
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
@@ -65,15 +65,15 @@ class Gaus(object):
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return means, tf.exp(logvars).numpy()
 
-    def F(self, theta, gamma=1, max_step=5e3):
+    def F(self, theta, gamma=.99, max_step=5e3):
         G = 0.0
         state = self.env.reset()
         done = False
         a_dim = np.arange(self.nA)
         discount = 1
         steps = 0
-        while not done:
-        # while not done and (steps < max_step):
+        # while not done:
+        while not done and (steps < max_step):
             # WRITE CODE HERE
             fn = lambda a: [theta[2*a*(self.state_dim+1)] + state @ theta[2*a*(self.state_dim+1)+1: (2*a+1)*(self.state_dim+1)], 
                             theta[(2*a+1)*(self.state_dim+1)] + state @ theta[(2*a+1)*(self.state_dim+1)+1: (2*a+2)*(self.state_dim+1)]]
@@ -93,6 +93,7 @@ class Gaus(object):
         state = self.env.reset()
         done = False
         a_dim = np.arange(self.nA)
+        steps = 0
         while not done:
             # WRITE CODE HERE
             fn = lambda a: [theta[2*a*(self.state_dim+1)] + state @ theta[2*a*(self.state_dim+1)+1: (2*a+1)*(self.state_dim+1)], 
@@ -104,10 +105,12 @@ class Gaus(object):
 
             state, reward, done, _ = self.env.step(action)
             G += reward
+            steps += 1
+        print("The length of the trajectory is {}".format(steps))
         return G
 
 
-    def nnF(self, nn, gamma=1, max_step=5e3):
+    def nnF(self, nn, gamma=.99, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
@@ -126,7 +129,7 @@ class Gaus(object):
             steps += 1
         return G
     
-    def nneval(self, nn, max_step=5e3):
+    def nneval(self, nn, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
