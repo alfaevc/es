@@ -108,7 +108,7 @@ if __name__ == '__main__':
     # print(np.array(list(map(fn, epsilons))))
     # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
     # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N)
-    actor, accum_rewards = es.nn_gradascent(actor, policy, output_dim=1, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100)
+    actor, accum_rewards = es.nn_gradascent(actor, pi, output_dim=1, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100)
     nn_test_video(pi, actor, env_name, method)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
