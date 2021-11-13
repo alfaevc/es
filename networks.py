@@ -26,6 +26,13 @@ class NN(tf.keras.Model):
     #x = self.dense3(x)
     x = self.output_layer(x)
     return x
+
+  def nnparams2theta(self):
+    theta = []
+    for p in self.trainable_weights:
+      theta.append(p.numpy().reshape(-1))
+    theta = np.concatenate(tuple(theta))
+    return theta
   
   def theta2nnparams(self, theta, input_dim, output_dim):
     params = []
@@ -51,12 +58,6 @@ class NN(tf.keras.Model):
 
     return params
 
-  def nnparams2theta(self):
-    theta = []
-    for p in self.trainable_weights:
-      theta.append(p.numpy().reshape(-1))
-    theta = np.concatenate(tuple(theta))
-    return theta
   
   def update_params(self, new_params):
     for i in range(len(new_params)):

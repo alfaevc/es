@@ -79,18 +79,27 @@ if __name__ == '__main__':
   env = gym.make(env_name)
   state_dim = env.reset().size
   # theta_dim = state_dim + 1
+  layers = []
   nA, = env.action_space.shape
-  theta_dim = (state_dim + 1) * 2 * nA
+  # theta_dim = (state_dim + 1) * 2 * nA
+  layers = [8,2]
 
+  b = state_dim
   # lp = policy.Log(env)
-  pi = policy.Energy(env, state_dim, nA=nA)
+  nn = NN(1, layers=layers)
+  nn.compile(optimizer=nn.optimizer, loss=nn.loss)
+  nn.fit(np.random.standard_normal((b,state_dim+nA)), np.random.standard_normal((b,1)), epochs=1, batch_size=b, verbose=0)
+  pi = policy.Energy(env, nn, state_dim, nA=nA)
+
+  theta_dim = nn.nnparams2theta().size
+  N = theta_dim
+
   # pi = policy.Gaus(env, state_dim, nA=nA)
   # fn_with_env = functools.partial(rl_fn, env=env)
 
   num_seeds = 5
-  max_epoch = 151
+  max_epoch = 201
   # max_epoch = 301
-  N = theta_dim
   res = np.zeros((num_seeds, max_epoch))
   method = "AT"
   print("The method is {}".format(method))

@@ -92,7 +92,7 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
 
 def nn_gradascent(actor, policy, output_dim=1, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
-    for i in range(max_epoch): 
+    for i in range(max_epoch):
       theta = actor.nnparams2theta()
       accum_rewards[i] = policy.eval(actor)
       if i%1==0:

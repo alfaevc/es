@@ -146,31 +146,31 @@ class Gaus(object):
         return G
 
 class Energy(object):
-    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=3):
+    def __init__(self, env, nn, state_dim, nA, min_logvar=1, max_logvar=3):
         self.env = env
+        self.nn = nn
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
         self.nA = nA
         self.state_dim = state_dim
 
     def energy_action(self, actor, state, K):
-        sample_actions = np.random.uniform(low=-1, high=1, size=(K,self.nA))
+        sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
         states = np.repeat(state, K).reshape((K,state.size))
-        sas =  np.concatenate((states, sample_actions), axis=1)
+        sas = np.concatenate((states, sample_actions), axis=1)
         energies = actor(sas).numpy().reshape(-1)
         return(sample_actions[np.argmax(energies)])  
     
-    def F(self, nn, gamma=.99, max_step=1e4):
+    def F(self, theta, gamma=.99, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
-        a_dim = np.arange(self.nA)
         discount = 1
         steps = 0
+        self.nn.update_params(self.nn.theta2nnparams(theta, self.state_dim+self.nA, 1))
         while not done:
         # while not done and (steps < max_step):
-            
-            action = self.energy_action(nn, state, K=a_dim*5)
+            action = self.energy_action(self.nn, state, K=self.nA*10)
             # action = np.random.normal(a_mean[0], a_v[0])
 
             state, reward, done, _ = self.env.step(action)
@@ -179,21 +179,15 @@ class Energy(object):
             steps += 1
         return G
 
-    def eval(self, nn, gamma=.99, max_step=1e4):
+    def eval(self, nn):
         G = 0.0
         state = self.env.reset()
         done = False
-        a_dim = np.arange(self.nA)
-        discount = 1
-        steps = 0
         while not done:
-        # while not done and (steps < max_step):
-            action = self.energy_action(nn, state, K=a_dim*5)
+            action = self.energy_action(nn, state, K=self.nA*10)
 
             state, reward, done, _ = self.env.step(action)
-            G += reward * discount
-            discount *= gamma
-            steps += 1
+            G += reward
         return G
 
 
