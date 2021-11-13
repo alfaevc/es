@@ -30,6 +30,7 @@ if __name__ == '__main__':
   # env_name = 'CartPole-v0'
   env = gym.make(env_name)
   state = env.reset()
+  s = state.size
   a = env.action_space
   n, = a.shape
   # theta_dim = state_dim + 1
@@ -57,6 +58,14 @@ if __name__ == '__main__':
   new_params = actor.theta2nnparams(theta, state.size+n, 1)
   actor.update_params(new_params)
   print(actor.nnparams2theta().size)
+
+  sample_actions = np.random.uniform(low=-1, high=1, size=(N,n))
+  states = np.repeat(state, N).reshape((N,s))
+  sas =  np.concatenate((states, sample_actions), axis=1)
+  energies = actor(sas).numpy().reshape(-1)
+  best_action = sample_actions[np.argmax(energies)]
+  print(best_action)
+  
 
 
 # In[ ]:

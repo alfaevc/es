@@ -64,6 +64,13 @@ class Gaus(object):
         logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return means, tf.exp(logvars).numpy()
+    
+    def energy_action(self, actor, state, K):
+        sample_actions = np.random.uniform(low=-1, high=1, size=(K,self.nA))
+        states = np.repeat(state, K).reshape((K,state.size))
+        sas =  np.concatenate((states, sample_actions), axis=1)
+        energies = actor(sas).numpy().reshape(-1)
+        return(sample_actions[np.argmax(energies)])
 
     def F(self, theta, gamma=.99, max_step=5e3):
         G = 0.0
@@ -145,6 +152,40 @@ class Gaus(object):
 
         return G
 
+    def enF(self, nn, gamma=.99, max_step=1e4):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        a_dim = np.arange(self.nA)
+        discount = 1
+        steps = 0
+        while not done:
+        # while not done and (steps < max_step):
+            
+            action = self.energy_action(nn, state, K=a_dim*5)
+            # action = np.random.normal(a_mean[0], a_v[0])
 
+            state, reward, done, _ = self.env.step(action)
+            G += reward * discount
+            discount *= gamma
+            steps += 1
+        return G
+
+    def eneval(self, nn, gamma=.99, max_step=1e4):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        a_dim = np.arange(self.nA)
+        discount = 1
+        steps = 0
+        while not done:
+        # while not done and (steps < max_step):
+            action = self.energy_action(nn, state, K=a_dim*5)
+
+            state, reward, done, _ = self.env.step(action)
+            G += reward * discount
+            discount *= gamma
+            steps += 1
+        return G
 
 
