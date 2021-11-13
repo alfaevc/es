@@ -162,7 +162,7 @@ class GausNN(object):
           mean and log variance tf tensors
         Note that you will still have to call sess.run on these tensors in order to get the actual output.
         """
-        means = output[:, 0:self.nA]
+        means = output[:, :self.nA]
         raw_vs = output[:, self.nA:]
         logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)

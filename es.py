@@ -90,7 +90,7 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
       theta += eta * vanilla_gradient(theta, policy, N=N)
   return theta, accum_rewards
 
-def nn_gradascent(actor, policy, output_dim=1, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+def nn_gradascent(actor, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
     for i in range(max_epoch):
       theta = actor.nnparams2theta()
