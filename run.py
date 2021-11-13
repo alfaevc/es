@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
   b = state_dim
   # lp = policy.Log(env)
-  nn = NN(nA, layers=layers)
+  nn = NN(nA*2, layers=layers)
   # nn = NN(1, layers=layers)
   nn.compile(optimizer=nn.optimizer, loss=nn.loss)
   # nn.fit(np.random.standard_normal((b,state_dim+nA)), np.random.standard_normal((b,1)), epochs=1, batch_size=b, verbose=0)
@@ -113,7 +113,7 @@ if __name__ == '__main__':
   for k in tqdm.tqdm(range(num_seeds)):
     # theta0 = np.random.standard_normal(size=theta_dim)
     # actor = NN(1, layers=[8,2])
-    actor = NN(nA, layers=layers)
+    actor = NN(nA*2, layers=layers)
     actor.compile(optimizer=actor.optimizer, loss=actor.loss)
     # actor.fit(np.random.standard_normal((N,state_dim+nA)), np.random.standard_normal((N,1)), epochs=1, batch_size=N, verbose=0)
     actor.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)

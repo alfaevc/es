@@ -174,7 +174,7 @@ class GausNN(object):
         done = False
         discount = 1
         steps = 0
-        self.nn.update_params(self.nn.theta2nnparams(theta, self.input_dim, self.nA))
+        self.nn.update_params(self.nn.theta2nnparams(theta, self.input_dim, self.nn.output_dim))
         while not done:
         # while not done and (steps < max_step):
             a_mean, a_v  = self.get_output(self.nn(np.expand_dims(state, 0)).numpy())
@@ -195,7 +195,6 @@ class GausNN(object):
             a_mean, a_v  = self.get_output(nn(np.expand_dims(state, 0)).numpy())
             # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
             action = np.random.normal(a_mean[0], a_v[0])
-            print(action)
 
             state, reward, done, _ = self.env.step(action)
             G += reward
