@@ -18,6 +18,7 @@ class NN(tf.keras.Model):
 
     self.optimizer = tf.keras.optimizers.Adam(learning_rate=actor_lr)
     self.loss = tf.keras.losses.MeanSquaredError()
+    self.output_dim = output_size
 
 
   def call(self, inputs):

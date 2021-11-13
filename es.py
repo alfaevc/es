@@ -104,7 +104,8 @@ def nn_gradascent(actor, policy, output_dim=1, method=None, sigma=1, eta=1e-3, m
         theta += eta * FD_gradient(theta, policy, sigma, N=N)
       else: #vanilla
         theta += eta * vanilla_gradient(theta, policy, N=N)
-      new_params = actor.theta2nnparams(theta, policy.state_dim+policy.nA, output_dim)
+      new_params = actor.theta2nnparams(theta, policy.input_dim, policy.nn.output_dim)
+      # new_params = actor.theta2nnparams(theta, policy.input_dim+policy.nA, output_dim)
       actor.update_params(new_params)
 
     return actor, accum_rewards

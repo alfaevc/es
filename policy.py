@@ -145,14 +145,69 @@ class Gaus(object):
 
         return G
 
-class Energy(object):
+class GausNN(object):
     def __init__(self, env, nn, state_dim, nA, min_logvar=1, max_logvar=3):
         self.env = env
         self.nn = nn
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
         self.nA = nA
-        self.state_dim = state_dim
+        self.input_dim = state_dim
+
+    def get_output(self, output):
+        """
+        Argument:
+          output: tf variable representing the output of the keras models, i.e., model.output
+        Return:
+          mean and log variance tf tensors
+        Note that you will still have to call sess.run on these tensors in order to get the actual output.
+        """
+        means = output[:, 0:self.nA]
+        raw_vs = output[:, self.nA:]
+        logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
+        logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
+        return means, tf.exp(logvars).numpy()
+
+    def F(self, theta, gamma=.99, max_step=1e4):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        discount = 1
+        steps = 0
+        self.nn.update_params(self.nn.theta2nnparams(theta, self.input_dim, self.nA))
+        while not done:
+        # while not done and (steps < max_step):
+            a_mean, a_v  = self.get_output(self.nn(np.expand_dims(state, 0)).numpy())
+            # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+            action = np.random.normal(a_mean[0], a_v[0])
+
+            state, reward, done, _ = self.env.step(action)
+            G += reward * discount
+            discount *= gamma
+            steps += 1
+        return G
+
+    def eval(self, nn):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        while not done:
+            a_mean, a_v  = self.get_output(nn(np.expand_dims(state, 0)).numpy())
+            # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+            action = np.random.normal(a_mean[0], a_v[0])
+            print(action)
+
+            state, reward, done, _ = self.env.step(action)
+            G += reward
+        return G
+
+class Energy(object):
+    def __init__(self, env, nn, state_dim, nA, min_logvar=1, max_logvar=3):
+        self.env = env
+        self.nn = nn
+        self.min_logvar = min_logvar
+        self.max_logvar = max_logvar
+        self.input_dim = nA + state_dim
 
     def energy_action(self, actor, state, K):
         sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
@@ -167,7 +222,7 @@ class Energy(object):
         done = False
         discount = 1
         steps = 0
-        self.nn.update_params(self.nn.theta2nnparams(theta, self.state_dim+self.nA, 1))
+        self.nn.update_params(self.nn.theta2nnparams(theta, self.input_dim, 1))
         while not done:
         # while not done and (steps < max_step):
             action = self.energy_action(self.nn, state, K=self.nA*10)
