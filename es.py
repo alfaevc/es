@@ -44,7 +44,7 @@ def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
   hessian = np.mean(np.array(list(map(fn, epsilons))), axis=0) 
   return hessian
 
-def choose_covariate(theta,policy,sigma=1,N=100):
+def choose_covariate(theta, policy, sigma=1, N=100):
     grad=AT_gradient(theta, policy, sigma=sigma, N=2*N)
     hessian=hessian_gaussian_smoothing(theta, policy, sigma=sigma, N=N)
     MSE_AT=(np.linalg.norm(grad)**2)/N
@@ -60,7 +60,7 @@ def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch):
-    accum_rewards[i] = policy.evaluate(theta)
+    accum_rewards[i] = policy.eval(theta)
     print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
     if i%10==0:#update method every 20 iterations
       choice, MSE_FD, MSE_AT = choose_covariate(theta,policy,sigma,N=theta.size*5)
@@ -78,7 +78,7 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch): 
-    accum_rewards[i] = policy.evaluate(theta)
+    accum_rewards[i] = policy.eval(theta)
     if i%1==0:
       print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
     
@@ -89,6 +89,27 @@ def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=
     else: #vanilla
       theta += eta * vanilla_gradient(theta, policy, N=N)
   return theta, accum_rewards
+
+def nn_gradascent(actor, policy, output_dim=1, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+    accum_rewards = np.zeros(max_epoch)
+    for i in range(max_epoch): 
+      theta = actor.nnparams2theta()
+      accum_rewards[i] = policy.eval(actor)
+      if i%1==0:
+        print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
+      
+      if method == "AT":
+        theta += eta * AT_gradient(theta, policy, sigma, N=N)
+      elif method == "FD":
+        theta += eta * FD_gradient(theta, policy, sigma, N=N)
+      else: #vanilla
+        theta += eta * vanilla_gradient(theta, policy, N=N)
+      new_params = actor.theta2nnparams(theta, policy.state_dim+policy.nA, output_dim)
+      actor.update_params(new_params)
+
+    return actor, accum_rewards
+
+    
 
 
 

@@ -64,13 +64,6 @@ class Gaus(object):
         logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return means, tf.exp(logvars).numpy()
-    
-    def energy_action(self, actor, state, K):
-        sample_actions = np.random.uniform(low=-1, high=1, size=(K,self.nA))
-        states = np.repeat(state, K).reshape((K,state.size))
-        sas =  np.concatenate((states, sample_actions), axis=1)
-        energies = actor(sas).numpy().reshape(-1)
-        return(sample_actions[np.argmax(energies)])
 
     def F(self, theta, gamma=.99, max_step=5e3):
         G = 0.0
@@ -95,7 +88,7 @@ class Gaus(object):
             steps += 1
         return G
 
-    def evaluate(self, theta):
+    def eval(self, theta):
         G = 0.0
         state = self.env.reset()
         done = False
@@ -152,7 +145,22 @@ class Gaus(object):
 
         return G
 
-    def enF(self, nn, gamma=.99, max_step=1e4):
+class Energy(object):
+    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=3):
+        self.env = env
+        self.min_logvar = min_logvar
+        self.max_logvar = max_logvar
+        self.nA = nA
+        self.state_dim = state_dim
+
+    def energy_action(self, actor, state, K):
+        sample_actions = np.random.uniform(low=-1, high=1, size=(K,self.nA))
+        states = np.repeat(state, K).reshape((K,state.size))
+        sas =  np.concatenate((states, sample_actions), axis=1)
+        energies = actor(sas).numpy().reshape(-1)
+        return(sample_actions[np.argmax(energies)])  
+    
+    def F(self, nn, gamma=.99, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
@@ -171,7 +179,7 @@ class Gaus(object):
             steps += 1
         return G
 
-    def eneval(self, nn, gamma=.99, max_step=1e4):
+    def eval(self, nn, gamma=.99, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
@@ -187,5 +195,6 @@ class Gaus(object):
             discount *= gamma
             steps += 1
         return G
+
 
 

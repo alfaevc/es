@@ -4,7 +4,7 @@ import numpy as np
 
 class NN(tf.keras.Model):
     
-  def __init__(self, output_size, layers=[32,16,8]):
+  def __init__(self, output_size, layers=[32,16,8], actor_lr=1e-4):
     super().__init__()
     initializer = tf.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="normal", seed=None)
 
@@ -15,6 +15,9 @@ class NN(tf.keras.Model):
     self.output_layer = tf.keras.layers.Dense(output_size, activation=tf.identity, kernel_initializer=initializer)
 
     self.ls = layers
+
+    self.optimizer = tf.keras.optimizers.Adam(learning_rate=actor_lr)
+    self.loss = tf.keras.losses.MeanSquaredError()
 
 
   def call(self, inputs):

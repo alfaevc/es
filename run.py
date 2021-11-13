@@ -10,6 +10,7 @@ import tqdm
 import numpy as np
 import es
 import policy
+from networks import NN
 
 import matplotlib.pyplot as plt
 import gym
@@ -47,13 +48,34 @@ def test_video(policy, theta, env_name, method):
         G += reward
     
     print("The return is {}".format(G))
+
+def nn_test_video(policy, actor, env_name, method):
+    save_path = "./nnvideos-%s-%s" % (env_name, method)
+    if not os.path.exists(save_path):
+        os.mkdir(save_path)
+    # To create video
+    env = gym.wrappers.Monitor(policy.env, save_path, force=True)
+    G = 0.0
+    state = env.reset()
+    done = False
+    while not done:
+        # WRITE CODE HERE
+        env.render()    
+        action = policy.energy_action(actor, state, K=policy.nA*5)
+
+        state, reward, done, _ = env.step(action)
+        G += reward
+            
+    print("The return is {}".format(G))
+    
+
   
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
   # env_name = 'FetchPush-v1'
-  env_name = 'HalfCheetah-v2'
+  # env_name = 'HalfCheetah-v2'
   # env_name = 'Swimmer-v2'
-  # env_name = 'InvertedPendulumBulletEnv-v0'
+  env_name = 'InvertedPendulumBulletEnv-v0'
   env = gym.make(env_name)
   state_dim = env.reset().size
   # theta_dim = state_dim + 1
@@ -61,8 +83,10 @@ if __name__ == '__main__':
   theta_dim = (state_dim + 1) * 2 * nA
 
   # lp = policy.Log(env)
-  pi = policy.Gaus(env, state_dim, nA=nA)
+  pi = policy.Energy(env, state_dim, nA=nA)
+  # pi = policy.Gaus(env, state_dim, nA=nA)
   # fn_with_env = functools.partial(rl_fn, env=env)
+
   num_seeds = 5
   max_epoch = 151
   # max_epoch = 301
@@ -72,7 +96,10 @@ if __name__ == '__main__':
   print("The method is {}".format(method))
 
   for k in tqdm.tqdm(range(num_seeds)):
-    theta0 = np.random.standard_normal(size=theta_dim)
+    # theta0 = np.random.standard_normal(size=theta_dim)
+    actor = NN(1, layers=[8,2])
+    actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+    actor.fit(np.random.standard_normal((N,state_dim+nA)), np.random.standard_normal((N,1)), epochs=1, batch_size=N, verbose=0)
     # test_video(pi, theta0, env_name, method)
     # epsilons = np.random.multivariate_normal(np.zeros(5), np.identity(5), size=2)
     # print(epsilons)
@@ -80,8 +107,9 @@ if __name__ == '__main__':
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
     # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-    theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N)
-    test_video(pi, theta, env_name, method)
+    # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N)
+    actor, accum_rewards = es.nn_gradascent(actor, policy, output_dim=1, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100)
+    nn_test_video(pi, actor, env_name, method)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)
 
