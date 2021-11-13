@@ -94,19 +94,17 @@ def nn_gradascent(actor, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, 
     accum_rewards = np.zeros(max_epoch)
     theta = actor.nnparams2theta()
     for i in range(max_epoch):
-      accum_rewards[i] = policy.eval(actor)
-      if i%1==0:
-        print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
-      
       if method == "AT":
         theta += eta * AT_gradient(theta, policy, sigma, N=N)
       elif method == "FD":
         theta += eta * FD_gradient(theta, policy, sigma, N=N)
       else: #vanilla
         theta += eta * vanilla_gradient(theta, policy, N=N)
-      new_params = actor.theta2nnparams(theta, policy.input_dim, policy.nn.output_dim)
-      # new_params = actor.theta2nnparams(theta, policy.input_dim+policy.nA, output_dim)
-      actor.update_params(new_params)
+      if i%1==0:
+        new_params = actor.theta2nnparams(theta, policy.input_dim, policy.nn.output_dim)
+        actor.update_params(new_params)
+        accum_rewards[i] = policy.eval(actor)
+        print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
 
     return actor, accum_rewards
 
