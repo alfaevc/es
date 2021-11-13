@@ -10,7 +10,7 @@ class NN(tf.keras.Model):
 
     self.dense1 = tf.keras.layers.Dense(layers[0], activation=tf.nn.relu, kernel_initializer=initializer)
     self.dense2 = tf.keras.layers.Dense(layers[1], activation=tf.nn.relu, kernel_initializer=initializer)
-    self.dense3 = tf.keras.layers.Dense(layers[2], activation=tf.nn.relu, kernel_initializer=initializer)
+    #self.dense3 = tf.keras.layers.Dense(layers[2], activation=tf.nn.relu, kernel_initializer=initializer)
 
     self.output_layer = tf.keras.layers.Dense(output_size, activation=tf.identity, kernel_initializer=initializer)
 
@@ -20,9 +20,9 @@ class NN(tf.keras.Model):
   def call(self, inputs):
     x = self.dense1(inputs)
     x = self.dense2(x)
-    x = self.dense3(x)
+    #x = self.dense3(x)
     x = self.output_layer(x)
-    return x 
+    return x
   
   def theta2nnparams(self, theta, input_dim, output_dim):
     params = []
@@ -33,14 +33,14 @@ class NN(tf.keras.Model):
       end_index += self.ls[i]
       params.append(theta[start_index:end_index])
       start_index = end_index
-      end_index += self.ls[self.ls[i] * self.ls[i+1]]
+      end_index += self.ls[i] * self.ls[i+1]
       params.append(theta[start_index:end_index].reshape(self.ls[i], self.ls[i+1]))
       start_index = end_index
     
     end_index += self.ls[-1]
     params.append(theta[start_index:end_index])
     start_index = end_index
-    end_index += self.ls[self.ls[-1] * output_dim]
+    end_index += self.ls[-1] * output_dim
     params.append(theta[start_index:end_index].reshape(self.ls[-1], output_dim))
     params.append(theta[-output_dim:])
 

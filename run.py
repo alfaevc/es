@@ -64,7 +64,7 @@ if __name__ == '__main__':
   pi = policy.Gaus(env, state_dim, nA=nA)
   # fn_with_env = functools.partial(rl_fn, env=env)
   num_seeds = 5
-  max_epoch = 201
+  max_epoch = 151
   # max_epoch = 301
   N = theta_dim
   res = np.zeros((num_seeds, max_epoch))
