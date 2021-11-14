@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-
+from sklearn.preprocessing import PolynomialFeatures
 
 class Log(object):  
     def __init__(self, env):
@@ -207,13 +207,15 @@ class Energy(object):
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
         self.input_dim = nA + state_dim
+        self.nA=nA
 
     def energy_action(self, actor, state, K):
-        sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
-        states = np.repeat(state, K).reshape((K,state.size))
+        sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
+        #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
+        states = np.tile(state,(K,1))
         sas = np.concatenate((states, sample_actions), axis=1)
         energies = actor(sas).numpy().reshape(-1)
-        return(sample_actions[np.argmax(energies)])  
+        return(sample_actions[np.argmin(energies)])  
     
     def F(self, theta, gamma=.99, max_step=1e4):
         G = 0.0
@@ -244,5 +246,46 @@ class Energy(object):
             G += reward
         return G
 
+class Energy_polyn(object):
+    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=3):
+        self.env = env
+        self.min_logvar = min_logvar
+        self.max_logvar = max_logvar
+        self.input_dim = nA + state_dim
+        self.nA=nA
+
+    def energy_action(self, theta, state, K):    
+        sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
+        #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
+        states = np.tile(state,(K,1))
+        sas = np.concatenate((states, sample_actions), axis=1)
+        sas_Matrix=PolynomialFeatures(degree=2, include_bias=False).fit_transform(sas)
+        energies=sas_Matrix@theta
+        return(sample_actions[np.argmin(energies)])  
+    
+    def F(self, theta, gamma=.99, max_step=1e4):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        discount = 1
+        steps = 0
+        while not done:
+        # while not done and (steps < max_step):
+            action = self.energy_action(theta, state, K=self.nA*10)
+            state, reward, done, _ = self.env.step(action)
+            G += reward * discount
+            discount *= gamma
+            steps += 1
+        return G
+
+    def eval(self, theta):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        while not done:
+            action = self.energy_action(theta, state, K=self.nA*10)
+            state, reward, done, _ = self.env.step(action)
+            G += reward
+        return G
 
 
