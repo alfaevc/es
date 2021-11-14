@@ -98,7 +98,7 @@ if __name__ == '__main__':
   # pi = policy.GausNN(env, nn, state_dim, nA=nA)
 
   theta_dim = nn.nnparams2theta().size
-  N = theta_dim
+  N = theta_dim*5
 
   # pi = policy.Gaus(env, state_dim, nA=nA)
 
