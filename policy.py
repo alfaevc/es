@@ -146,7 +146,7 @@ class Gaus(object):
         return G
 
 class GausNN(object):
-    def __init__(self, env, nn, state_dim, nA, min_logvar=1, max_logvar=3):
+    def __init__(self, env, nn, state_dim, nA, min_logvar=1, max_logvar=5):
         self.env = env
         self.nn = nn
         self.min_logvar = min_logvar
@@ -216,6 +216,7 @@ class Energy(object):
         sas = np.concatenate((states, sample_actions), axis=1)
         energies = actor(sas).numpy().reshape(-1)
         return(sample_actions[np.argmin(energies)])  
+
     
     def F(self, theta, gamma=.99, max_step=1e4):
         G = 0.0

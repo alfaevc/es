@@ -104,7 +104,6 @@ if __name__ == '__main__':
   N = theta_dim
   pi = policy.Energy_polyn(env, state_dim, nA=nA)
   # pi = policy.Gaus(env, state_dim, nA=nA)
-  # fn_with_env = functools.partial(rl_fn, env=env)
 
   num_seeds = 5
   max_epoch = 201
