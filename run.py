@@ -85,23 +85,22 @@ if __name__ == '__main__':
   layers = []
   nA, = env.action_space.shape
   # theta_dim = (state_dim + 1) * 2 * nA
-  layers = [8,2]
+  layers = [8,4]
 
   b = state_dim
   # lp = policy.Log(env)
-  nn = NN(nA*2, layers=layers)
-  # nn = NN(1, layers=layers)
+  # nn = NN(nA*2, layers=layers)
+  nn = NN(1, layers=layers)
   nn.compile(optimizer=nn.optimizer, loss=nn.loss)
-  # nn.fit(np.random.standard_normal((b,state_dim+nA)), np.random.standard_normal((b,1)), epochs=1, batch_size=b, verbose=0)
-  nn.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
-  # pi = policy.Energy(env, nn, state_dim, nA=nA)
-  pi = policy.GausNN(env, nn, state_dim, nA=nA)
+  nn.fit(np.random.standard_normal((b,state_dim+nA)), np.random.standard_normal((b,1)), epochs=1, batch_size=b, verbose=0)
+  # nn.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+  pi = policy.Energy(env, nn, state_dim, nA=nA)
+  # pi = policy.GausNN(env, nn, state_dim, nA=nA)
 
   theta_dim = nn.nnparams2theta().size
   N = theta_dim
 
   # pi = policy.Gaus(env, state_dim, nA=nA)
-  # fn_with_env = functools.partial(rl_fn, env=env)
 
   num_seeds = 5
   max_epoch = 201
@@ -112,11 +111,11 @@ if __name__ == '__main__':
 
   for k in tqdm.tqdm(range(num_seeds)):
     # theta0 = np.random.standard_normal(size=theta_dim)
-    # actor = NN(1, layers=[8,2])
-    actor = NN(nA*2, layers=layers)
+    actor = NN(1, layers=layers)
+    # actor = NN(nA*2, layers=layers)
     actor.compile(optimizer=actor.optimizer, loss=actor.loss)
-    # actor.fit(np.random.standard_normal((N,state_dim+nA)), np.random.standard_normal((N,1)), epochs=1, batch_size=N, verbose=0)
-    actor.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    actor.fit(np.random.standard_normal((b,state_dim+nA)), np.random.standard_normal((b,1)), epochs=1, batch_size=N, verbose=0)
+    # actor.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
     # epsilons = np.random.multivariate_normal(np.zeros(5), np.identity(5), size=2)
     # print(epsilons)
     # fn = lambda x: fn_with_env(theta0 + x) * x
@@ -124,7 +123,7 @@ if __name__ == '__main__':
     # print(np.array(list(map(fn, epsilons))))
     # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
     # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N)
-    actor, accum_rewards = es.nn_gradascent(actor, pi, method=None, sigma=1, eta=1e-3, max_epoch=200, N=N)
+    actor, accum_rewards = es.nn_gradascent(actor, pi, method=None, sigma=1, eta=1e-3, max_epoch=max_epoch, N=N)
     nn_test_video(pi, actor, env_name, method)
     res[k] = np.array(accum_rewards)
   ns = range(1, len(accum_rewards)+1)

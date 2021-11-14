@@ -65,6 +65,9 @@ if __name__ == '__main__':
   energies = actor(sas).numpy().reshape(-1)
   best_action = sample_actions[np.argmax(energies)]
   print(best_action)
+
+  a = np.array([1,2,3])
+  print(np.tile(a, 5).reshape((5,3)))
   
 
 
