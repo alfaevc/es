@@ -110,9 +110,13 @@ def nn_gradascent(actor, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, 
 
 def nn_twin_gradascent(actor, critic, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
-    print(actor.nnparams2theta().size)
-    print(critic.nnparams2theta().size)
-    theta = np.concatenate(actor.nnparams2theta(), critic.nnparams2theta())
+
+    # print(actor.nnparams2theta().size)
+    # actor.print_params()
+    # print(critic.nnparams2theta().size)
+    # critic.print_params()
+    theta = np.concatenate((actor.nnparams2theta(), critic.nnparams2theta()))
+    print(theta.size)
     for i in range(max_epoch):
       if method == "AT":
         theta += eta * AT_gradient(theta, policy, sigma, N=N)
@@ -123,9 +127,9 @@ def nn_twin_gradascent(actor, critic, policy, method=None, sigma=1, eta=1e-3, ma
       if i%1==0:
         theta_action = theta[:policy.actor_theta_len]
         theta_state = theta[policy.actor_theta_len:]
-        act_params = actor.theta2nnparams(theta_action, policy.nA, policy.state_dim)
+        act_params = actor.theta2nnparams(theta_action, policy.nA, policy.nA)
         actor.update_params(act_params)
-        critic_params = critic.theta2nnparams(theta_state, policy.state_dim, policy.state_dim)
+        critic_params = critic.theta2nnparams(theta_state, policy.state_dim, policy.nA)
         critic.update_params(critic_params)
         accum_rewards[i] = policy.eval(actor, critic)
         print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))

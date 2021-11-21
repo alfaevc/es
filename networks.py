@@ -63,6 +63,11 @@ class NN(tf.keras.Model):
   def update_params(self, new_params):
     for i in range(len(new_params)):
       self.trainable_weights[i].assign(new_params[i])
+
+  def print_params(self):
+    for p in self.trainable_weights:
+      print(p.numpy().shape)
+    
   
 
   

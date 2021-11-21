@@ -320,8 +320,8 @@ class Energy_twin(object):
         steps = 0
         theta_action = theta[:self.actor_theta_len]
         theta_state = theta[self.actor_theta_len:]
-        self.actor.update_params(self.actor.theta2nnparams(theta_action, self.nA, self.state_dim))
-        self.critic.update_params(self.critic.theta2nnparams(theta_state, self.state_dim, self.state_dim))
+        self.actor.update_params(self.actor.theta2nnparams(theta_action, self.nA, self.nA))
+        self.critic.update_params(self.critic.theta2nnparams(theta_state, self.state_dim, self.nA))
 
         while not done:
         # while not done and (steps < max_step):
