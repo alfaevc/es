@@ -2,6 +2,15 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import PolynomialFeatures
 
+def egreedy(x, e=0.05):
+    k = x.size
+    pi = (e / k) * np.ones(k)
+    a_max = np.argmax(x)
+    pi[a_max] += 1-e
+    a = np.random.choice(k, p=pi)
+    return x[a]
+
+
 class Log(object):  
     def __init__(self, env):
         self.env = env
@@ -262,7 +271,7 @@ class Energy_polyn(object):
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
         states = np.tile(state,(K,1))
         sas = np.concatenate((states, sample_actions), axis=1)
-        sas_Matrix=PolynomialFeatures(degree=2, include_bias=False).fit_transform(sas)
+        sas_Matrix = PolynomialFeatures(degree=2, include_bias=False).fit_transform(sas)
         energies=sas_Matrix@theta
         return(sample_actions[np.argmin(energies)])
     
