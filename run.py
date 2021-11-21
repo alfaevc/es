@@ -90,13 +90,13 @@ if __name__ == '__main__':
 
     b = 1
 
-    actor = NN(nA, layers=actor_layers)
-    actor.compile(optimizer=actor.optimizer, loss=actor.loss)
-    actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    # actor = NN(nA, layers=actor_layers)
+    # actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+    # actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
 
-    critic = NN(nA, layers=critic_layers)
-    critic.compile(optimizer=critic.optimizer, loss=actor.loss)
-    critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    # critic = NN(nA, layers=critic_layers)
+    # critic.compile(optimizer=critic.optimizer, loss=actor.loss)
+    # critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
 
     # lp = policy.Log(env)
     #nn = NN(nA*2, layers=layers)
@@ -112,19 +112,28 @@ if __name__ == '__main__':
     # theta_dim=round((state_dim+nA)*(1+(state_dim+nA+1)/2))#num of polynomial terms up to degree 2
     # pi = policy.Energy_polyn(env, state_dim, nA=nA)
     # pi = policy.Gaus(env, state_dim, nA=nA)
-    pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
-    theta_dim = pi.actor_theta_len + pi.critic_theta_len
-
-    N = theta_dim
+    # pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
+    # theta_dim = pi.actor_theta_len + pi.critic_theta_len
 
     num_seeds = 5
-    max_epoch = 81
+    max_epoch = 61
     # max_epoch = 301
     res = np.zeros((num_seeds, max_epoch))
     method = "AT"
     print("The method is {}".format(method))
 
     for k in tqdm.tqdm(range(num_seeds)):
+        actor = NN(nA, layers=actor_layers)
+        actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+        actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+
+        critic = NN(nA, layers=critic_layers)
+        critic.compile(optimizer=critic.optimizer, loss=actor.loss)
+        critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+        pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
+        theta_dim = pi.actor_theta_len + pi.critic_theta_len
+
+        N = theta_dim
         # theta0 = np.random.standard_normal(size=theta_dim)
         #actor = NN(1, layers=layers)
         #actor = NN(nA*2, layers=layers)
