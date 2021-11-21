@@ -77,8 +77,8 @@ def nn_test_video(policy, actor, env_name, method):
 if __name__ == '__main__':
     # env_name = 'FetchPush-v1'
     # env_name = 'HalfCheetah-v2'
-    # env_name = 'Swimmer-v2'
-    env_name = 'InvertedPendulumBulletEnv-v0'
+    env_name = 'Swimmer-v2'
+    # env_name = 'InvertedPendulumBulletEnv-v0'
     env = gym.make(env_name)
     state_dim = env.reset().size
     # theta_dim = state_dim + 1
@@ -116,7 +116,7 @@ if __name__ == '__main__':
     # theta_dim = pi.actor_theta_len + pi.critic_theta_len
 
     num_seeds = 5
-    max_epoch = 61
+    max_epoch = 101
     # max_epoch = 301
     res = np.zeros((num_seeds, max_epoch))
     method = "AT"

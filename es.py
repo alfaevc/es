@@ -116,7 +116,7 @@ def nn_twin_gradascent(actor, critic, policy, method=None, sigma=1, eta=1e-3, ma
     # print(critic.nnparams2theta().size)
     # critic.print_params()
     theta = np.concatenate((actor.nnparams2theta(), critic.nnparams2theta()))
-    print(theta.size)
+    # print(theta.size)
     for i in range(max_epoch):
       if method == "AT":
         theta += eta * AT_gradient(theta, policy, sigma, N=N)
