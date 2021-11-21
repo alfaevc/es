@@ -118,7 +118,7 @@ if __name__ == '__main__':
     N = theta_dim
 
     num_seeds = 5
-    max_epoch = 201
+    max_epoch = 81
     # max_epoch = 301
     res = np.zeros((num_seeds, max_epoch))
     method = "AT"
@@ -158,8 +158,8 @@ if __name__ == '__main__':
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
 
-    plt.title("Energy {0} ES".format(method), fontsize = 24)
-    plt.savefig("plots/Energy {0} ES {1}".format(method, env_name))
+    plt.title("Energy Twin {0} ES".format(method), fontsize = 24)
+    plt.savefig("plots/Energy twin {0} ES {1}".format(method, env_name))
   
 
 

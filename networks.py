@@ -8,7 +8,7 @@ class NN(tf.keras.Model):
     super().__init__()
     initializer = tf.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="normal", seed=None)
 
-    self.dense1 = tf.keras.layers.Dense(layers[0], activation=tf.nn.relu, kernel_initializer=initializer)
+    self.dense1 = tf.keras.layers.Dense(layers[0], activation=tf.identity, kernel_initializer=initializer)
     # self.dense2 = tf.keras.layers.Dense(layers[1], activation=tf.nn.relu, kernel_initializer=initializer)
     #self.dense3 = tf.keras.layers.Dense(layers[2], activation=tf.nn.relu, kernel_initializer=initializer)
 
