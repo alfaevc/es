@@ -2,13 +2,12 @@ import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import PolynomialFeatures
 
-def egreedy(x, e=0.05):
+def egreedy(x, e=0.01):
     k = x.size
     pi = (e / k) * np.ones(k)
-    a_max = np.argmax(x)
-    pi[a_max] += 1-e
-    a = np.random.choice(k, p=pi)
-    return x[a]
+    a_min = np.argmin(x)
+    pi[a_min] += 1-e
+    return np.random.choice(k, p=pi)
 
 
 class Log(object):  
@@ -226,7 +225,7 @@ class Energy(object):
         states = np.tile(state,(K,1))
         sas = np.concatenate((states, sample_actions), axis=1)
         energies = actor(sas).numpy().reshape(-1)
-        return(sample_actions[np.argmin(energies)])  
+        return sample_actions[np.argmin(energies)]
 
     
     def F(self, theta, gamma=.99, max_step=1e4):
@@ -312,13 +311,14 @@ class Energy_twin(object):
         self.actor_theta_len = actor.nnparams2theta().size
         self.critic_theta_len = critic.nnparams2theta().size
 
-    def energy_action(self, actor, critic, state, K):
+    def energy_actions(self, actor, critic, state, K):
         sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
         latent_actions = actor(sample_actions).numpy()
         latent_states = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
         energies = np.einsum('ij,ij->i', latent_actions, latent_states)
-        return(sample_actions[np.argmin(energies)])
+        # return sample_actions[np.argmin(energies)]
+        return energies, sample_actions
 
     
     def F(self, theta, gamma=.99, max_step=1e4):
@@ -334,8 +334,9 @@ class Energy_twin(object):
 
         while not done:
         # while not done and (steps < max_step):
-            action = self.energy_action(self.actor, self.critic, state, K=self.nA*10)
-            # action = np.random.normal(a_mean[0], a_v[0])
+            energies, actions = self.energy_actions(self.actor, self.critic, state, K=self.nA*10)
+            action = actions[egreedy(energies)]
+            # action = actions[np.argmin(energies)]
 
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
@@ -348,7 +349,8 @@ class Energy_twin(object):
         state = self.env.reset()
         done = False
         while not done:
-            action = self.energy_action(actor, critic, state, K=self.nA*10)
+            energies, actions = self.energy_actions(actor, critic, state, K=self.nA*10)
+            action = actions[np.argmin(energies)]
 
             state, reward, done, _ = self.env.step(action)
             G += reward
