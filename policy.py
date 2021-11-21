@@ -200,6 +200,8 @@ class GausNN(object):
             G += reward
         return G
 
+
+
 class Energy(object):
     def __init__(self, env, nn, state_dim, nA, min_logvar=1, max_logvar=3):
         self.env = env
@@ -253,18 +255,18 @@ class Energy_polyn(object):
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
         self.input_dim = nA + state_dim
-        self.nA=nA
+        self.nA = nA
 
     def energy_action(self, theta, state, K):    
-        sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
+        sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
         states = np.tile(state,(K,1))
         sas = np.concatenate((states, sample_actions), axis=1)
         sas_Matrix=PolynomialFeatures(degree=2, include_bias=False).fit_transform(sas)
         energies=sas_Matrix@theta
-        return(sample_actions[np.argmin(energies)])  
+        return(sample_actions[np.argmin(energies)])
     
-    def F(self, theta, gamma=.99, max_step=1e4):
+    def F(self, theta, gamma=1, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
@@ -285,6 +287,60 @@ class Energy_polyn(object):
         done = False
         while not done:
             action = self.energy_action(theta, state, K=self.nA*10)
+            state, reward, done, _ = self.env.step(action)
+            G += reward
+        return G
+
+class Energy_twin(object):
+    def __init__(self, env, actor, critic, state_dim, nA, min_logvar=1, max_logvar=3):
+        self.env = env
+        self.actor = actor
+        self.critic = critic
+        self.min_logvar = min_logvar
+        self.max_logvar = max_logvar
+        self.state_dim = state_dim
+        self.nA = nA
+        self.actor_theta_len = actor.nnparams2theta().size
+        self.critic_theta_len = critic.nnparams2theta().size
+
+    def energy_action(self, actor, critic, state, K):
+        sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
+        #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
+        latent_actions = actor(sample_actions).numpy()
+        latent_states = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
+        energies = np.einsum('ij,ij->i', latent_actions, latent_states)
+        return(sample_actions[np.argmin(energies)])
+
+    
+    def F(self, theta, gamma=.99, max_step=1e4):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        discount = 1
+        steps = 0
+        theta_action = theta[:self.actor_theta_len]
+        theta_state = theta[self.actor_theta_len:]
+        self.actor.update_params(self.actor.theta2nnparams(theta_action, self.nA, self.state_dim))
+        self.critic.update_params(self.critic.theta2nnparams(theta_state, self.state_dim, self.state_dim))
+
+        while not done:
+        # while not done and (steps < max_step):
+            action = self.energy_action(self.actor, self.critic, state, K=self.nA*10)
+            # action = np.random.normal(a_mean[0], a_v[0])
+
+            state, reward, done, _ = self.env.step(action)
+            G += reward * discount
+            discount *= gamma
+            steps += 1
+        return G
+
+    def eval(self, actor, critic):
+        G = 0.0
+        state = self.env.reset()
+        done = False
+        while not done:
+            action = self.energy_action(actor, critic, state, K=self.nA*10)
+
             state, reward, done, _ = self.env.step(action)
             G += reward
         return G

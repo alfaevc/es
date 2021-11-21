@@ -108,6 +108,30 @@ def nn_gradascent(actor, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, 
 
     return actor, accum_rewards
 
+def nn_twin_gradascent(actor, critic, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+    accum_rewards = np.zeros(max_epoch)
+    print(actor.nnparams2theta().size)
+    print(critic.nnparams2theta().size)
+    theta = np.concatenate(actor.nnparams2theta(), critic.nnparams2theta())
+    for i in range(max_epoch):
+      if method == "AT":
+        theta += eta * AT_gradient(theta, policy, sigma, N=N)
+      elif method == "FD":
+        theta += eta * FD_gradient(theta, policy, sigma, N=N)
+      else: #vanilla
+        theta += eta * vanilla_gradient(theta, policy, N=N)
+      if i%1==0:
+        theta_action = theta[:policy.actor_theta_len]
+        theta_state = theta[policy.actor_theta_len:]
+        act_params = actor.theta2nnparams(theta_action, policy.nA, policy.state_dim)
+        actor.update_params(act_params)
+        critic_params = critic.theta2nnparams(theta_state, policy.state_dim, policy.state_dim)
+        critic.update_params(critic_params)
+        accum_rewards[i] = policy.eval(actor, critic)
+        print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
+
+    return actor, accum_rewards
+
     
 
 

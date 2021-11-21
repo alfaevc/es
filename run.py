@@ -15,7 +15,6 @@ from networks import NN
 import matplotlib.pyplot as plt
 import gym
 import pybullet_envs
-from sklearn.preprocessing import PolynomialFeatures
 
 
 
@@ -82,28 +81,42 @@ if __name__ == '__main__':
   env_name = 'InvertedPendulumBulletEnv-v0'
   env = gym.make(env_name)
   state_dim = env.reset().size
+  print(state_dim)
   # theta_dim = state_dim + 1
   layers = []
   nA, = env.action_space.shape
+  print(nA)
   # theta_dim = (state_dim + 1) * 2 * nA
-  layers = [8,8]
+  actor_layers = [nA]
+  critic_layers = [state_dim]
 
-  b = state_dim
+  b = 1
+
+  actor = NN(state_dim, layers=actor_layers)
+  actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+  actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,state_dim)), epochs=1, batch_size=b, verbose=0)
+
+  critic = NN(state_dim, layers=critic_layers)
+  critic.compile(optimizer=critic.optimizer, loss=actor.loss)
+  critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,state_dim)), epochs=1, batch_size=b, verbose=0)
   # lp = policy.Log(env)
   #nn = NN(nA*2, layers=layers)
-  nn = NN(1, layers=layers)
-  nn.compile(optimizer=nn.optimizer, loss=nn.loss)
-  nn.fit(np.random.standard_normal((b,state_dim+nA)), np.random.standard_normal((b,1)), epochs=1, batch_size=b, verbose=0)
+  #nn = NN(1, layers=layers)
+  #nn.compile(optimizer=nn.optimizer, loss=nn.loss)
+  #nn.fit(np.random.standard_normal((b,state_dim+nA)), np.random.standard_normal((b,1)), epochs=1, batch_size=b, verbose=0)
   #nn.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
-  pi = policy.Energy(env, nn, state_dim, nA=nA)
+  #pi = policy.Energy(env, nn, state_dim, nA=nA)
   #pi = policy.GausNN(env, nn, state_dim, nA=nA)
 
-  theta_dim = nn.nnparams2theta().size
+  # theta_dim = nn.nnparams2theta().size
   
-  theta_dim=round((state_dim+nA)*(1+(state_dim+nA+1)/2))#num of polynomial terms up to degree 2
-  N = theta_dim
-  pi = policy.Energy_polyn(env, state_dim, nA=nA)
+  # theta_dim=round((state_dim+nA)*(1+(state_dim+nA+1)/2))#num of polynomial terms up to degree 2
+  # pi = policy.Energy_polyn(env, state_dim, nA=nA)
   # pi = policy.Gaus(env, state_dim, nA=nA)
+  pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
+  theta_dim = pi.actor_theta_len + pi.critic_theta_len
+
+  N = theta_dim
 
   num_seeds = 5
   max_epoch = 201
@@ -124,8 +137,9 @@ if __name__ == '__main__':
     # fn = lambda x: fn_with_env(theta0 + x) * x
     # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
     # print(np.array(list(map(fn, epsilons))))
+    theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
     # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-    theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+    # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
     #actor, accum_rewards = es.nn_gradascent(actor, pi, method=None, sigma=1, eta=1e-3, max_epoch=200, N=N)
     #nn_test_video(pi, actor, env_name, method)
     res[k] = np.array(accum_rewards)
@@ -145,8 +159,8 @@ if __name__ == '__main__':
   plt.xlabel('Iterations', fontsize = 15)
   plt.ylabel('Return', fontsize = 15)
   
-  plt.title("{0} ES {1}".format(method, env_name), fontsize = 24)
-  plt.savefig("plots/{0} ES {1}".format(method, env_name))
+  plt.title("Energy {0} ES".format(method), fontsize = 24)
+  plt.savefig("plots/Energy {0} ES {1}".format(method, env_name))
   
 
 

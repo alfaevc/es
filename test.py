@@ -66,8 +66,11 @@ if __name__ == '__main__':
   best_action = sample_actions[np.argmax(energies)]
   print(best_action)
 
-  a = np.array([1,2,3])
-  print(np.tile(a, 5).reshape((5,3)))
+  a = np.array([[1,2],[3,4]])
+  b = np.array([[2,2],[3,4]])
+  
+
+  print(np.einsum('ij,ij->i', a, b))
   
 
 
