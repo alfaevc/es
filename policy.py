@@ -321,7 +321,7 @@ class Energy_twin(object):
         return energies, sample_actions
 
     
-    def F(self, theta, gamma=.99, max_step=1e4):
+    def F(self, theta, gamma=1, max_step=1e4):
         G = 0.0
         state = self.env.reset()
         done = False
