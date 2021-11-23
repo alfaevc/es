@@ -314,8 +314,8 @@ class Energy_twin(object):
     def energy_actions(self, actor, critic, state, K=10):
         sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
-        latent_actions = actor(sample_actions).numpy()
-        latent_states = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
+        latent_actions, latent_states = actor(sample_actions).numpy(), np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
+
         energies = np.einsum('ij,ij->i', latent_actions, latent_states)
         # return sample_actions[np.argmin(energies)]
         return energies, sample_actions
