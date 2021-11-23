@@ -311,7 +311,7 @@ class Energy_twin(object):
         self.actor_theta_len = actor.nnparams2theta().size
         self.critic_theta_len = critic.nnparams2theta().size
 
-    def energy_actions(self, actor, critic, state, K):
+    def energy_actions(self, actor, critic, state, K=10):
         sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
         latent_actions = actor(sample_actions).numpy()
