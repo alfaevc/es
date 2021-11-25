@@ -74,13 +74,15 @@ def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_
 
   return theta, accum_rewards, method
 
-def gradascent(theta0, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+def gradascent(theta0, policy, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
   for i in range(max_epoch): 
     accum_rewards[i] = policy.eval(theta)
     if i%1==0:
-      print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
+      print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))    
+      with open(filename, "a") as f:
+        f.write("%.d %.2f \n" % (i, accum_rewards[i]))
     
     if method == "AT":
       theta += eta * AT_gradient(theta, policy, sigma, N=N)
@@ -108,7 +110,7 @@ def nn_gradascent(actor, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, 
 
     return actor, accum_rewards
 
-def nn_twin_gradascent(actor, critic, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+def nn_twin_gradascent(actor, critic, policy, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
 
     # print(actor.nnparams2theta().size)
@@ -133,6 +135,8 @@ def nn_twin_gradascent(actor, critic, policy, method=None, sigma=1, eta=1e-3, ma
         critic.update_params(critic_params)
         accum_rewards[i] = policy.eval(actor, critic)
         print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
+        with open(filename, "a") as f:
+          f.write("%.d %.2f \n" % (i, accum_rewards[i]))
 
     return actor, accum_rewards
 

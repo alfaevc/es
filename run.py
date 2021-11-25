@@ -79,6 +79,11 @@ if __name__ == '__main__':
     # env_name = 'HalfCheetah-v2'
     env_name = 'Swimmer-v2'
     # env_name = 'InvertedPendulumBulletEnv-v0'
+
+    outfile = "twin_energy_{}.txt".format(env_name)
+    with open(outfile, "w") as f:
+        f.write("")
+
     env = gym.make(env_name)
     state_dim = env.reset().size
     # theta_dim = state_dim + 1
@@ -146,7 +151,9 @@ if __name__ == '__main__':
         # fn = lambda x: fn_with_env(theta0 + x) * x
         # print(fn_with_env(theta0 + epsilons[0]) * epsilons[0])
         # print(np.array(list(map(fn, epsilons))))
-        theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
+        with open(outfile, "a") as f:
+            f.write("Seed {}:\n".format(k))
+        theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         #actor, accum_rewards = es.nn_gradascent(actor, pi, method=None, sigma=1, eta=1e-3, max_epoch=200, N=N)
