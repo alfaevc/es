@@ -316,8 +316,8 @@ class Energy_twin(object):
         self.critic_theta_len = critic.nnparams2theta().size
 
     def energy_actions(self, actor, critic, state, K=10):
-        sample_actions=np.array([i for i in product([-1,0,1],repeat=self.nA)])
-        K=min(len(sample_actions),K)
+        sample_actions=np.array(list(product([-1,0,1],repeat=self.nA)))
+        K = min(len(sample_actions), K)
         ind=np.random.choice(np.arange(len(sample_actions)),K,replace=False)
         sample_actions=sample_actions[ind]
         #sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))

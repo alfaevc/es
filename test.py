@@ -16,6 +16,7 @@ import pybullet_envs
 from networks import NN
 
 import tensorflow as tf
+from itertools import product
 
 
 """### AT vs FD
@@ -33,8 +34,7 @@ if __name__ == '__main__':
   state = env.reset()
   s = state.size
   a = env.action_space
-  print(state)
-  print(a)
+  print(list(product([-1,0,1],repeat=3)))
   
 
   
