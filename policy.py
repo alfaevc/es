@@ -1,6 +1,7 @@
 import numpy as np
 import tensorflow as tf
 from sklearn.preprocessing import PolynomialFeatures
+from itertools import product
 
 def egreedy(x, e=0.01):
     k = x.size
@@ -265,7 +266,8 @@ class Energy_polyn(object):
         self.input_dim = nA + state_dim
         self.nA = nA
 
-    def energy_action(self, theta, state, K):    
+    def energy_action(self, theta, state, K):
+        #sample_actions=np.array([i for i in product([-1,0,1],repeat=2)])
         sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
         states = np.tile(state,(K,1))
@@ -312,10 +314,11 @@ class Energy_twin(object):
         self.critic_theta_len = critic.nnparams2theta().size
 
     def energy_actions(self, actor, critic, state, K=10):
-        sample_actions = np.random.uniform(low=-2.0, high=2.0, size=(K,self.nA))
+        sample_actions=np.array([i for i in product([-1,0,1],repeat=self.nA)])
+        K=len(sample_actions)
+        #sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
         latent_actions, latent_states = actor(sample_actions).numpy(), np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
-
         energies = np.einsum('ij,ij->i', latent_actions, latent_states)
         # return sample_actions[np.argmin(energies)]
         return energies, sample_actions
