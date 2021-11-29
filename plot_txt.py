@@ -7,7 +7,7 @@ import numpy as np
 
 def main():
     n = 10
-    outfile = "flles/twin_energy.txt"
+    filename = "flles/twin_energy.txt"
     # outfile = "a2c.txt"
 
     # env_name = 'FetchPush-v1'
@@ -21,7 +21,7 @@ def main():
 
     res = np.zeros((num_seeds, max_epoch))
 
-    with open(outfile, "r") as f:
+    with open(filename, "r") as f:
         lines = f.readlines()
         for k in range(num_seeds):
             ns = []

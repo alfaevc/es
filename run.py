@@ -77,10 +77,10 @@ def nn_test_video(policy, actor, env_name, method):
 if __name__ == '__main__':
     # env_name = 'FetchPush-v1'
     # env_name = 'HalfCheetah-v2'
-    env_name = 'Swimmer-v2'
-    # env_name = 'InvertedPendulumBulletEnv-v0'
+    # env_name = 'Swimmer-v2'
+    env_name = 'InvertedPendulumBulletEnv-v0'
 
-    outfile = "twin_energy_{}.txt".format(env_name)
+    outfile = "files/twin_energy_{}.txt".format(env_name)
     with open(outfile, "w") as f:
         f.write("")
 
@@ -136,6 +136,8 @@ if __name__ == '__main__':
         critic.compile(optimizer=critic.optimizer, loss=actor.loss)
         critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
         
+        actor.print_params()
+
         pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
         theta_dim = pi.actor_theta_len + pi.critic_theta_len
 
