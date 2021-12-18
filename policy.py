@@ -70,7 +70,7 @@ class Gaus(object):
           mean and log variance tf tensors
         Note that you will still have to call sess.run on these tensors in order to get the actual output.
         """
-        means = output[:, 0:self.nA]
+        means = output[:, 0:self.nA]    
         raw_vs = output[:, self.nA:]
         logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
@@ -155,6 +155,7 @@ class Gaus(object):
             G += reward
 
         return G
+
 
 class GausNN(object):
     def __init__(self, env, nn, state_dim, nA, min_logvar=1, max_logvar=5):
@@ -277,6 +278,7 @@ class Energy_polyn(object):
         sas_Matrix = PolynomialFeatures(degree=2, include_bias=False).fit_transform(sas)
         energies=sas_Matrix@theta
         return(sample_actions[np.argmin(energies)])
+        
     
     def F(self, theta, gamma=1, max_step=1e4):
         G = 0.0
@@ -316,11 +318,11 @@ class Energy_twin(object):
         self.critic_theta_len = critic.nnparams2theta().size
 
     def energy_actions(self, actor, critic, state, K=10):
-        sample_actions = np.array(list(product([-1,0,1], repeat=self.nA)))
-        K = min(len(sample_actions), K)
-        ind=np.random.choice(np.arange(len(sample_actions)),K,replace=False)
-        sample_actions=sample_actions[ind]
-        #sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
+        #sample_actions = np.array(list(product([-1,0,1], repeat=self.nA)))
+        #K = min(len(sample_actions), K)
+        #ind=np.random.choice(np.arange(len(sample_actions)),K,replace=False)
+        #sample_actions=sample_actions[ind]
+        sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,self.nA))
         #states = np.repeat(state, K).reshape((K,state.size))#this gives a wrong matrix
         latent_actions, latent_states = actor(sample_actions).numpy(), np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
         energies = np.einsum('ij,ij->i', latent_actions, latent_states)
@@ -349,10 +351,10 @@ class Energy_twin(object):
 
         while not done:
         # while not done and (steps < max_step):
-            # energies, actions = self.energy_actions(self.actor, self.critic, state, K=self.nA*10)
-            # action = actions[egreedy(energies)]
+            energies, actions = self.energy_actions(self.actor, self.critic, state, K=self.nA*10)
+            action = actions[egreedy(energies)]
             # action = actions[np.argmin(energies)]
-            action = self.energy_min_action(self.actor, self.critic, state)
+            # action = self.energy_min_action(self.actor, self.critic, state)
 
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
@@ -365,9 +367,9 @@ class Energy_twin(object):
         state = self.env.reset()
         done = False
         while not done:
-            # energies, actions = self.energy_actions(actor, critic, state, K=self.nA*10)
-            # action = actions[np.argmin(energies)]
-            action = self.energy_min_action(actor, critic, state)
+            energies, actions = self.energy_actions(actor, critic, state, K=self.nA*10)
+            action = actions[np.argmin(energies)]
+            # action = self.energy_min_action(actor, critic, state)
 
             state, reward, done, _ = self.env.step(action)
             G += reward

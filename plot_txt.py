@@ -7,33 +7,35 @@ import numpy as np
 
 def main():
     n = 10
-    filename = "flles/twin_energy.txt"
+    filename = "files/twin_energy_InvertedPendulumBulletEnv-v0.txt"
     # outfile = "a2c.txt"
 
     # env_name = 'FetchPush-v1'
-    env_name = 'HalfCheetah-v2'
+    # env_name = 'HalfCheetah-v2'
     # env_name = 'Swimmer-v2'
-    # env_name = 'InvertedPendulumBulletEnv-v0'
+    env_name = 'InvertedPendulumBullet'
 
     method = "AT"
 
-    num_seeds, max_epoch = 5, 201
+    num_seeds, max_epoch = 4, 101
 
-    res = np.zeros((num_seeds, max_epoch))
+    act_epoch = 101
+
+    res = np.zeros((num_seeds, act_epoch))
 
     with open(filename, "r") as f:
         lines = f.readlines()
         for k in range(num_seeds):
             ns = []
             evals = []
-            for j in range(1, max_epoch+1):
+            for j in range(1, act_epoch+1):
                 l = list(filter(len, re.split(' |\*|\n', lines[k*(max_epoch+1)+j])))
-                l = list(map(float, l))
-                ns.append(l[0])
-                evals.append(l[1])
+                ns.append(j-1)
+                evals.append(float(l[-1]))
+                # print(l)
             res[k] = np.array(evals)
     
-    ns = range(max_epoch)
+    ns = range(act_epoch)
 
     avs = np.mean(res, axis=0)
     maxs = np.max(res, axis=0)
@@ -42,14 +44,17 @@ def main():
     # method = "mixed"
 
     plt.fill_between(ns, mins, maxs, alpha=0.1)
-    plt.plot(ns, avs, '-o', markersize=1, label=env_name)
+    plt.plot(ns, avs, '-o', markersize=1)
 
-    plt.legend()
+    # plt.fill_between(ns, mins, maxs, alpha=0.1)
+    # plt.plot(ns, ns, '-o', markersize=1, label='Shit')
+
+    # plt.legend()
     plt.grid(True)
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
 
-    plt.title("Energy Twin {0} ES".format(method), fontsize = 24)
+    plt.title("Energy Twin {0} ES {1}".format(method, env_name), fontsize = 20)
     plt.savefig("plots/Energy twin {0} ES {1}".format(method, env_name))
 
 

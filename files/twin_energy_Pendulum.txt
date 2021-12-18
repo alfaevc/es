@@ -1,0 +1,1012 @@
+Seed 0:
+The return for epoch 0 is 8.0
+The return for epoch 1 is 13.0
+The return for epoch 2 is 25.0
+The return for epoch 3 is 16.0
+The return for epoch 4 is 35.0
+The return for epoch 5 is 35.0
+The return for epoch 6 is 19.0
+The return for epoch 7 is 56.0
+The return for epoch 8 is 51.0
+The return for epoch 9 is 27.0
+The return for epoch 10 is 51.0
+The return for epoch 11 is 24.0
+The return for epoch 12 is 28.0
+The return for epoch 13 is 61.0
+The return for epoch 14 is 76.0
+The return for epoch 15 is 28.0
+The return for epoch 16 is 82.0
+The return for epoch 17 is 91.0
+The return for epoch 18 is 69.0
+The return for epoch 19 is 63.0
+The return for epoch 20 is 71.0
+The return for epoch 21 is 76.0
+The return for epoch 22 is 29.0
+The return for epoch 23 is 60.0
+The return for epoch 24 is 11.0
+The return for epoch 25 is 10.0
+The return for epoch 26 is 12.0
+The return for epoch 27 is 9.0
+The return for epoch 28 is 10.0
+The return for epoch 29 is 8.0
+The return for epoch 30 is 9.0
+The return for epoch 31 is 10.0
+The return for epoch 32 is 10.0
+The return for epoch 33 is 10.0
+The return for epoch 34 is 9.0
+The return for epoch 35 is 10.0
+The return for epoch 36 is 12.0
+The return for epoch 37 is 9.0
+The return for epoch 38 is 1000.0
+The return for epoch 39 is 1000.0
+The return for epoch 40 is 1000.0
+The return for epoch 41 is 1000.0
+The return for epoch 42 is 1000.0
+The return for epoch 43 is 1000.0
+The return for epoch 44 is 315.0
+The return for epoch 45 is 1000.0
+The return for epoch 46 is 1000.0
+The return for epoch 47 is 11.0
+The return for epoch 48 is 1000.0
+The return for epoch 49 is 1000.0
+The return for epoch 50 is 1000.0
+The return for epoch 51 is 1000.0
+The return for epoch 52 is 1000.0
+The return for epoch 53 is 1000.0
+The return for epoch 54 is 1000.0
+The return for epoch 55 is 1000.0
+The return for epoch 56 is 1000.0
+The return for epoch 57 is 1000.0
+The return for epoch 58 is 1000.0
+The return for epoch 59 is 1000.0
+The return for epoch 60 is 1000.0
+The return for epoch 61 is 1000.0
+The return for epoch 62 is 1000.0
+The return for epoch 63 is 1000.0
+The return for epoch 64 is 1000.0
+The return for epoch 65 is 1000.0
+The return for epoch 66 is 1000.0
+The return for epoch 67 is 1000.0
+The return for epoch 68 is 1000.0
+The return for epoch 69 is 1000.0
+The return for epoch 70 is 1000.0
+The return for epoch 71 is 1000.0
+The return for epoch 72 is 1000.0
+The return for epoch 73 is 1000.0
+The return for epoch 74 is 1000.0
+The return for epoch 75 is 1000.0
+The return for epoch 76 is 1000.0
+The return for epoch 77 is 1000.0
+The return for epoch 78 is 1000.0
+The return for epoch 79 is 1000.0
+The return for epoch 80 is 1000.0
+The return for epoch 81 is 1000.0
+The return for epoch 82 is 1000.0
+The return for epoch 83 is 1000.0
+The return for epoch 84 is 1000.0
+The return for epoch 85 is 1000.0
+The return for epoch 86 is 1000.0
+The return for epoch 87 is 1000.0
+The return for epoch 88 is 1000.0
+The return for epoch 89 is 1000.0
+The return for epoch 90 is 1000.0
+The return for epoch 91 is 1000.0
+The return for epoch 92 is 1000.0
+The return for epoch 93 is 1000.0
+The return for epoch 94 is 1000.0
+The return for epoch 95 is 1000.0
+The return for epoch 96 is 1000.0
+The return for epoch 97 is 1000.0
+The return for epoch 98 is 1000.0
+The return for epoch 99 is 1000.0
+The return for epoch 100 is 1000.0
+The return for epoch 101 is 1000.0
+The return for epoch 102 is 1000.0
+The return for epoch 103 is 1000.0
+The return for epoch 104 is 1000.0
+The return for epoch 105 is 1000.0
+The return for epoch 106 is 1000.0
+The return for epoch 107 is 1000.0
+The return for epoch 108 is 1000.0
+The return for epoch 109 is 1000.0
+The return for epoch 110 is 1000.0
+The return for epoch 111 is 1000.0
+The return for epoch 112 is 1000.0
+The return for epoch 113 is 1000.0
+The return for epoch 114 is 1000.0
+The return for epoch 115 is 1000.0
+The return for epoch 116 is 1000.0
+The return for epoch 117 is 1000.0
+The return for epoch 118 is 1000.0
+The return for epoch 119 is 1000.0
+The return for epoch 120 is 1000.0
+The return for epoch 121 is 1000.0
+The return for epoch 122 is 1000.0
+The return for epoch 123 is 1000.0
+The return for epoch 124 is 1000.0
+The return for epoch 125 is 1000.0
+The return for epoch 126 is 1000.0
+The return for epoch 127 is 1000.0
+The return for epoch 128 is 1000.0
+The return for epoch 129 is 1000.0
+The return for epoch 130 is 1000.0
+The return for epoch 131 is 1000.0
+The return for epoch 132 is 1000.0
+The return for epoch 133 is 1000.0
+The return for epoch 134 is 1000.0
+The return for epoch 135 is 1000.0
+The return for epoch 136 is 1000.0
+The return for epoch 137 is 1000.0
+The return for epoch 138 is 1000.0
+The return for epoch 139 is 1000.0
+The return for epoch 140 is 1000.0
+The return for epoch 141 is 1000.0
+The return for epoch 142 is 1000.0
+The return for epoch 143 is 1000.0
+The return for epoch 144 is 1000.0
+The return for epoch 145 is 1000.0
+The return for epoch 146 is 1000.0
+The return for epoch 147 is 1000.0
+The return for epoch 148 is 1000.0
+The return for epoch 149 is 1000.0
+The return for epoch 150 is 1000.0
+The return for epoch 151 is 1000.0
+The return for epoch 152 is 1000.0
+The return for epoch 153 is 1000.0
+The return for epoch 154 is 1000.0
+The return for epoch 155 is 1000.0
+The return for epoch 156 is 1000.0
+The return for epoch 157 is 1000.0
+The return for epoch 158 is 1000.0
+The return for epoch 159 is 1000.0
+The return for epoch 160 is 1000.0
+The return for epoch 161 is 1000.0
+The return for epoch 162 is 1000.0
+The return for epoch 163 is 1000.0
+The return for epoch 164 is 1000.0
+The return for epoch 165 is 1000.0
+The return for epoch 166 is 1000.0
+The return for epoch 167 is 1000.0
+The return for epoch 168 is 1000.0
+The return for epoch 169 is 1000.0
+The return for epoch 170 is 1000.0
+The return for epoch 171 is 1000.0
+The return for epoch 172 is 1000.0
+The return for epoch 173 is 1000.0
+The return for epoch 174 is 1000.0
+The return for epoch 175 is 1000.0
+The return for epoch 176 is 1000.0
+The return for epoch 177 is 1000.0
+The return for epoch 178 is 1000.0
+The return for epoch 179 is 1000.0
+The return for epoch 180 is 1000.0
+The return for epoch 181 is 1000.0
+The return for epoch 182 is 1000.0
+The return for epoch 183 is 1000.0
+The return for epoch 184 is 1000.0
+The return for epoch 185 is 1000.0
+The return for epoch 186 is 1000.0
+The return for epoch 187 is 1000.0
+The return for epoch 188 is 1000.0
+The return for epoch 189 is 1000.0
+The return for epoch 190 is 1000.0
+The return for epoch 191 is 1000.0
+The return for epoch 192 is 1000.0
+The return for epoch 193 is 1000.0
+The return for epoch 194 is 1000.0
+The return for epoch 195 is 1000.0
+The return for epoch 196 is 1000.0
+The return for epoch 197 is 1000.0
+The return for epoch 198 is 1000.0
+The return for epoch 199 is 1000.0
+The return for epoch 200 is 1000.0
+Seed 1:
+The return for epoch 0 is 6.0
+The return for epoch 1 is 8.0
+The return for epoch 2 is 9.0
+The return for epoch 3 is 10.0
+The return for epoch 4 is 9.0
+The return for epoch 5 is 7.0
+The return for epoch 6 is 7.0
+The return for epoch 7 is 8.0
+The return for epoch 8 is 8.0
+The return for epoch 9 is 7.0
+The return for epoch 10 is 6.0
+The return for epoch 11 is 7.0
+The return for epoch 12 is 10.0
+The return for epoch 13 is 8.0
+The return for epoch 14 is 11.0
+The return for epoch 15 is 8.0
+The return for epoch 16 is 8.0
+The return for epoch 17 is 10.0
+The return for epoch 18 is 12.0
+The return for epoch 19 is 11.0
+The return for epoch 20 is 32.0
+The return for epoch 21 is 35.0
+The return for epoch 22 is 66.0
+The return for epoch 23 is 55.0
+The return for epoch 24 is 53.0
+The return for epoch 25 is 45.0
+The return for epoch 26 is 74.0
+The return for epoch 27 is 129.0
+The return for epoch 28 is 211.0
+The return for epoch 29 is 197.0
+The return for epoch 30 is 1000.0
+The return for epoch 31 is 1000.0
+The return for epoch 32 is 1000.0
+The return for epoch 33 is 1000.0
+The return for epoch 34 is 1000.0
+The return for epoch 35 is 414.0
+The return for epoch 36 is 1000.0
+The return for epoch 37 is 1000.0
+The return for epoch 38 is 671.0
+The return for epoch 39 is 378.0
+The return for epoch 40 is 1000.0
+The return for epoch 41 is 1000.0
+The return for epoch 42 is 1000.0
+The return for epoch 43 is 242.0
+The return for epoch 44 is 251.0
+The return for epoch 45 is 288.0
+The return for epoch 46 is 20.0
+The return for epoch 47 is 1000.0
+The return for epoch 48 is 1000.0
+The return for epoch 49 is 1000.0
+The return for epoch 50 is 1000.0
+The return for epoch 51 is 1000.0
+The return for epoch 52 is 1000.0
+The return for epoch 53 is 1000.0
+The return for epoch 54 is 1000.0
+The return for epoch 55 is 1000.0
+The return for epoch 56 is 1000.0
+The return for epoch 57 is 1000.0
+The return for epoch 58 is 1000.0
+The return for epoch 59 is 1000.0
+The return for epoch 60 is 1000.0
+The return for epoch 61 is 1000.0
+The return for epoch 62 is 1000.0
+The return for epoch 63 is 1000.0
+The return for epoch 64 is 1000.0
+The return for epoch 65 is 1000.0
+The return for epoch 66 is 1000.0
+The return for epoch 67 is 1000.0
+The return for epoch 68 is 1000.0
+The return for epoch 69 is 1000.0
+The return for epoch 70 is 1000.0
+The return for epoch 71 is 1000.0
+The return for epoch 72 is 1000.0
+The return for epoch 73 is 1000.0
+The return for epoch 74 is 1000.0
+The return for epoch 75 is 1000.0
+The return for epoch 76 is 1000.0
+The return for epoch 77 is 1000.0
+The return for epoch 78 is 1000.0
+The return for epoch 79 is 1000.0
+The return for epoch 80 is 1000.0
+The return for epoch 81 is 1000.0
+The return for epoch 82 is 1000.0
+The return for epoch 83 is 1000.0
+The return for epoch 84 is 1000.0
+The return for epoch 85 is 1000.0
+The return for epoch 86 is 1000.0
+The return for epoch 87 is 1000.0
+The return for epoch 88 is 1000.0
+The return for epoch 89 is 1000.0
+The return for epoch 90 is 1000.0
+The return for epoch 91 is 1000.0
+The return for epoch 92 is 1000.0
+The return for epoch 93 is 1000.0
+The return for epoch 94 is 1000.0
+The return for epoch 95 is 1000.0
+The return for epoch 96 is 1000.0
+The return for epoch 97 is 1000.0
+The return for epoch 98 is 1000.0
+The return for epoch 99 is 1000.0
+The return for epoch 100 is 1000.0
+The return for epoch 101 is 1000.0
+The return for epoch 102 is 1000.0
+The return for epoch 103 is 1000.0
+The return for epoch 104 is 1000.0
+The return for epoch 105 is 1000.0
+The return for epoch 106 is 1000.0
+The return for epoch 107 is 1000.0
+The return for epoch 108 is 1000.0
+The return for epoch 109 is 1000.0
+The return for epoch 110 is 1000.0
+The return for epoch 111 is 1000.0
+The return for epoch 112 is 1000.0
+The return for epoch 113 is 1000.0
+The return for epoch 114 is 1000.0
+The return for epoch 115 is 1000.0
+The return for epoch 116 is 1000.0
+The return for epoch 117 is 1000.0
+The return for epoch 118 is 1000.0
+The return for epoch 119 is 1000.0
+The return for epoch 120 is 1000.0
+The return for epoch 121 is 1000.0
+The return for epoch 122 is 1000.0
+The return for epoch 123 is 1000.0
+The return for epoch 124 is 1000.0
+The return for epoch 125 is 1000.0
+The return for epoch 126 is 1000.0
+The return for epoch 127 is 1000.0
+The return for epoch 128 is 1000.0
+The return for epoch 129 is 1000.0
+The return for epoch 130 is 1000.0
+The return for epoch 131 is 1000.0
+The return for epoch 132 is 1000.0
+The return for epoch 133 is 1000.0
+The return for epoch 134 is 1000.0
+The return for epoch 135 is 1000.0
+The return for epoch 136 is 1000.0
+The return for epoch 137 is 1000.0
+The return for epoch 138 is 1000.0
+The return for epoch 139 is 1000.0
+The return for epoch 140 is 1000.0
+The return for epoch 141 is 1000.0
+The return for epoch 142 is 1000.0
+The return for epoch 143 is 1000.0
+The return for epoch 144 is 1000.0
+The return for epoch 145 is 1000.0
+The return for epoch 146 is 1000.0
+The return for epoch 147 is 1000.0
+The return for epoch 148 is 1000.0
+The return for epoch 149 is 1000.0
+The return for epoch 150 is 1000.0
+The return for epoch 151 is 1000.0
+The return for epoch 152 is 1000.0
+The return for epoch 153 is 1000.0
+The return for epoch 154 is 1000.0
+The return for epoch 155 is 1000.0
+The return for epoch 156 is 1000.0
+The return for epoch 157 is 1000.0
+The return for epoch 158 is 1000.0
+The return for epoch 159 is 1000.0
+The return for epoch 160 is 1000.0
+The return for epoch 161 is 1000.0
+The return for epoch 162 is 1000.0
+The return for epoch 163 is 1000.0
+The return for epoch 164 is 1000.0
+The return for epoch 165 is 1000.0
+The return for epoch 166 is 1000.0
+The return for epoch 167 is 1000.0
+The return for epoch 168 is 1000.0
+The return for epoch 169 is 1000.0
+The return for epoch 170 is 1000.0
+The return for epoch 171 is 1000.0
+The return for epoch 172 is 1000.0
+The return for epoch 173 is 1000.0
+The return for epoch 174 is 1000.0
+The return for epoch 175 is 1000.0
+The return for epoch 176 is 1000.0
+The return for epoch 177 is 1000.0
+The return for epoch 178 is 1000.0
+The return for epoch 179 is 1000.0
+The return for epoch 180 is 1000.0
+The return for epoch 181 is 1000.0
+The return for epoch 182 is 1000.0
+The return for epoch 183 is 1000.0
+The return for epoch 184 is 1000.0
+The return for epoch 185 is 1000.0
+The return for epoch 186 is 1000.0
+The return for epoch 187 is 1000.0
+The return for epoch 188 is 1000.0
+The return for epoch 189 is 1000.0
+The return for epoch 190 is 1000.0
+The return for epoch 191 is 1000.0
+The return for epoch 192 is 1000.0
+The return for epoch 193 is 1000.0
+The return for epoch 194 is 1000.0
+The return for epoch 195 is 1000.0
+The return for epoch 196 is 1000.0
+The return for epoch 197 is 1000.0
+The return for epoch 198 is 1000.0
+The return for epoch 199 is 1000.0
+The return for epoch 200 is 1000.0
+Seed 2:
+0 11.00 
+1 9.00 
+2 96.00 
+3 195.00 
+4 190.00 
+5 141.00 
+6 138.00 
+7 116.00 
+8 480.00 
+9 1000.00 
+10 1000.00 
+11 1000.00 
+12 1000.00 
+13 1000.00 
+14 1000.00 
+15 1000.00 
+16 390.00 
+17 18.00 
+18 85.00 
+19 1000.00 
+20 1000.00 
+21 272.00 
+22 303.00 
+23 16.00 
+24 1000.00 
+25 809.00 
+26 18.00 
+27 1000.00 
+28 1000.00 
+29 1000.00 
+30 1000.00 
+31 1000.00 
+32 1000.00 
+33 1000.00 
+34 1000.00 
+35 1000.00 
+36 1000.00 
+37 1000.00 
+38 1000.00 
+39 1000.00 
+40 1000.00 
+41 1000.00 
+42 1000.00 
+43 1000.00 
+44 1000.00 
+45 1000.00 
+46 1000.00 
+47 1000.00 
+48 1000.00 
+49 1000.00 
+50 1000.00 
+51 1000.00 
+52 1000.00 
+53 1000.00 
+54 1000.00 
+55 1000.00 
+56 1000.00 
+57 1000.00 
+58 1000.00 
+59 1000.00 
+60 1000.00 
+61 1000.00 
+62 1000.00 
+63 1000.00 
+64 1000.00 
+65 1000.00 
+66 1000.00 
+67 1000.00 
+68 1000.00 
+69 1000.00 
+70 1000.00 
+71 1000.00 
+72 1000.00 
+73 1000.00 
+74 1000.00 
+75 1000.00 
+76 1000.00 
+77 1000.00 
+78 1000.00 
+79 1000.00 
+80 1000.00 
+81 1000.00 
+82 1000.00 
+83 1000.00 
+84 1000.00 
+85 1000.00 
+86 1000.00 
+87 1000.00 
+88 1000.00 
+89 1000.00 
+90 1000.00 
+91 1000.00 
+92 1000.00 
+93 1000.00 
+94 1000.00 
+95 1000.00 
+96 1000.00 
+97 1000.00 
+98 1000.00 
+99 1000.00 
+100 1000.00 
+101 1000.00 
+102 1000.00 
+103 1000.00 
+104 1000.00 
+105 1000.00 
+106 1000.00 
+107 1000.00 
+108 1000.00 
+109 1000.00 
+110 1000.00 
+111 1000.00 
+112 1000.00 
+113 1000.00 
+114 1000.00 
+115 1000.00 
+116 1000.00 
+117 1000.00 
+118 1000.00 
+119 1000.00 
+120 1000.00 
+121 1000.00 
+122 1000.00 
+123 1000.00 
+124 1000.00 
+125 1000.00 
+126 1000.00 
+127 1000.00 
+128 1000.00 
+129 1000.00 
+130 1000.00 
+131 1000.00 
+132 1000.00 
+133 1000.00 
+134 1000.00 
+135 1000.00 
+136 1000.00 
+137 1000.00 
+138 1000.00 
+139 1000.00 
+140 1000.00 
+141 1000.00 
+142 1000.00 
+143 1000.00 
+144 1000.00 
+145 1000.00 
+146 1000.00 
+147 1000.00 
+148 1000.00 
+149 1000.00 
+150 1000.00 
+151 1000.00 
+152 1000.00 
+153 1000.00 
+154 1000.00 
+155 1000.00 
+156 1000.00 
+157 1000.00 
+158 1000.00 
+159 1000.00 
+160 1000.00 
+161 1000.00 
+162 1000.00 
+163 1000.00 
+164 1000.00 
+165 1000.00 
+166 1000.00 
+167 1000.00 
+168 1000.00 
+169 1000.00 
+170 1000.00 
+171 1000.00 
+172 1000.00 
+173 1000.00 
+174 1000.00 
+175 1000.00 
+176 1000.00 
+177 1000.00 
+178 1000.00 
+179 1000.00 
+180 1000.00 
+181 1000.00 
+182 1000.00 
+183 1000.00 
+184 1000.00 
+185 1000.00 
+186 1000.00 
+187 1000.00 
+188 1000.00 
+189 1000.00 
+190 1000.00 
+191 1000.00 
+192 1000.00 
+193 1000.00 
+194 1000.00 
+195 1000.00 
+196 1000.00 
+197 1000.00 
+198 1000.00 
+199 1000.00 
+200 1000.00 
+Seed 3:
+0 6.00 
+1 6.00 
+2 10.00 
+3 11.00 
+4 10.00 
+5 8.00 
+6 6.00 
+7 10.00 
+8 11.00 
+9 8.00 
+10 8.00 
+11 8.00 
+12 7.00 
+13 9.00 
+14 22.00 
+15 9.00 
+16 11.00 
+17 24.00 
+18 11.00 
+19 9.00 
+20 17.00 
+21 31.00 
+22 12.00 
+23 14.00 
+24 15.00 
+25 15.00 
+26 82.00 
+27 21.00 
+28 60.00 
+29 56.00 
+30 36.00 
+31 25.00 
+32 113.00 
+33 54.00 
+34 27.00 
+35 26.00 
+36 45.00 
+37 137.00 
+38 29.00 
+39 106.00 
+40 62.00 
+41 74.00 
+42 66.00 
+43 188.00 
+44 136.00 
+45 100.00 
+46 332.00 
+47 138.00 
+48 779.00 
+49 1000.00 
+50 375.00 
+51 1000.00 
+52 1000.00 
+53 652.00 
+54 1000.00 
+55 1000.00 
+56 452.00 
+57 273.00 
+58 182.00 
+59 16.00 
+60 1000.00 
+61 1000.00 
+62 1000.00 
+63 1000.00 
+64 1000.00 
+65 1000.00 
+66 1000.00 
+67 1000.00 
+68 1000.00 
+69 1000.00 
+70 1000.00 
+71 1000.00 
+72 1000.00 
+73 1000.00 
+74 1000.00 
+75 1000.00 
+76 1000.00 
+77 1000.00 
+78 1000.00 
+79 1000.00 
+80 1000.00 
+81 1000.00 
+82 1000.00 
+83 1000.00 
+84 1000.00 
+85 1000.00 
+86 1000.00 
+87 1000.00 
+88 1000.00 
+89 1000.00 
+90 1000.00 
+91 1000.00 
+92 1000.00 
+93 1000.00 
+94 1000.00 
+95 1000.00 
+96 1000.00 
+97 1000.00 
+98 1000.00 
+99 1000.00 
+100 1000.00 
+101 1000.00 
+102 1000.00 
+103 1000.00 
+104 1000.00 
+105 1000.00 
+106 1000.00 
+107 1000.00 
+108 1000.00 
+109 1000.00 
+110 1000.00 
+111 1000.00 
+112 1000.00 
+113 1000.00 
+114 1000.00 
+115 1000.00 
+116 1000.00 
+117 1000.00 
+118 1000.00 
+119 1000.00 
+120 1000.00 
+121 1000.00 
+122 1000.00 
+123 1000.00 
+124 1000.00 
+125 1000.00 
+126 1000.00 
+127 1000.00 
+128 1000.00 
+129 1000.00 
+130 1000.00 
+131 1000.00 
+132 1000.00 
+133 1000.00 
+134 1000.00 
+135 1000.00 
+136 1000.00 
+137 1000.00 
+138 1000.00 
+139 1000.00 
+140 1000.00 
+141 1000.00 
+142 1000.00 
+143 1000.00 
+144 1000.00 
+145 1000.00 
+146 1000.00 
+147 1000.00 
+148 1000.00 
+149 1000.00 
+150 1000.00 
+151 1000.00 
+152 1000.00 
+153 1000.00 
+154 1000.00 
+155 1000.00 
+156 1000.00 
+157 1000.00 
+158 1000.00 
+159 1000.00 
+160 1000.00 
+161 1000.00 
+162 1000.00 
+163 1000.00 
+164 1000.00 
+165 1000.00 
+166 1000.00 
+167 1000.00 
+168 1000.00 
+169 1000.00 
+170 1000.00 
+171 1000.00 
+172 1000.00 
+173 1000.00 
+174 1000.00 
+175 1000.00 
+176 1000.00 
+177 1000.00 
+178 1000.00 
+179 1000.00 
+180 1000.00 
+181 1000.00 
+182 1000.00 
+183 1000.00 
+184 1000.00 
+185 1000.00 
+186 1000.00 
+187 1000.00 
+188 1000.00 
+189 1000.00 
+190 1000.00 
+191 1000.00 
+192 1000.00 
+193 1000.00 
+194 1000.00 
+195 1000.00 
+196 1000.00 
+197 1000.00 
+198 1000.00 
+199 1000.00 
+200 1000.00
+Seed 4:
+0 9.00 
+1 9.00 
+2 7.00 
+3 9.00 
+4 9.00 
+5 12.00 
+6 47.00 
+7 29.00 
+8 34.00 
+9 30.00 
+10 78.00 
+11 103.00 
+12 160.00 
+13 157.00 
+14 150.00 
+15 114.00 
+16 94.00 
+17 132.00 
+18 136.00 
+19 127.00 
+20 170.00 
+21 1000.00 
+22 1000.00 
+23 1000.00 
+24 1000.00 
+25 1000.00 
+26 1000.00 
+27 274.00 
+28 8.00 
+29 1000.00 
+30 1000.00 
+31 1000.00 
+32 952.00 
+33 18.00 
+34 1000.00 
+35 1000.00 
+36 1000.00 
+37 1000.00 
+38 1000.00 
+39 1000.00 
+40 1000.00 
+41 1000.00 
+42 1000.00 
+43 1000.00 
+44 1000.00 
+45 1000.00 
+46 1000.00 
+47 1000.00 
+48 1000.00 
+49 1000.00 
+50 1000.00 
+51 1000.00 
+52 1000.00 
+53 1000.00 
+54 1000.00 
+55 1000.00 
+56 1000.00 
+57 1000.00 
+58 1000.00 
+59 1000.00 
+60 1000.00 
+61 1000.00 
+62 1000.00 
+63 1000.00 
+64 1000.00 
+65 1000.00 
+66 1000.00 
+67 1000.00 
+68 1000.00 
+69 1000.00 
+70 1000.00 
+71 1000.00 
+72 1000.00 
+73 1000.00 
+74 1000.00 
+75 1000.00 
+76 1000.00 
+77 1000.00 
+78 1000.00 
+79 1000.00 
+80 1000.00 
+81 1000.00 
+82 1000.00 
+83 1000.00 
+84 1000.00 
+85 1000.00 
+86 1000.00 
+87 1000.00 
+88 1000.00 
+89 1000.00 
+90 1000.00 
+91 1000.00 
+92 1000.00 
+93 1000.00 
+94 1000.00 
+95 1000.00 
+96 1000.00 
+97 1000.00 
+98 1000.00 
+99 1000.00 
+100 1000.00 
+101 1000.00 
+102 1000.00 
+103 1000.00 
+104 1000.00 
+105 1000.00 
+106 1000.00 
+107 1000.00 
+108 1000.00 
+109 1000.00 
+110 1000.00 
+111 1000.00 
+112 1000.00 
+113 1000.00 
+114 1000.00 
+115 1000.00 
+116 1000.00 
+117 1000.00 
+118 1000.00 
+119 1000.00 
+120 1000.00 
+121 1000.00 
+122 1000.00 
+123 1000.00 
+124 1000.00 
+125 1000.00 
+126 1000.00 
+127 1000.00 
+128 1000.00 
+129 1000.00 
+130 1000.00 
+131 1000.00 
+132 1000.00 
+133 1000.00 
+134 1000.00 
+135 1000.00 
+136 1000.00 
+137 1000.00 
+138 1000.00 
+139 1000.00 
+140 1000.00 
+141 1000.00 
+142 1000.00 
+143 1000.00 
+144 1000.00 
+145 1000.00 
+146 1000.00 
+147 1000.00 
+148 1000.00 
+149 1000.00 
+150 1000.00 
+151 1000.00 
+152 1000.00 
+153 1000.00 
+154 1000.00 
+155 1000.00 
+156 1000.00 
+157 1000.00 
+158 1000.00 
+159 1000.00 
+160 1000.00 
+161 1000.00 
+162 1000.00 
+163 1000.00 
+164 1000.00 
+165 1000.00 
+166 1000.00 
+167 1000.00 
+168 1000.00 
+169 1000.00 
+170 1000.00 
+171 1000.00 
+172 1000.00 
+173 1000.00 
+174 1000.00 
+175 1000.00 
+176 1000.00 
+177 1000.00 
+178 1000.00 
+179 1000.00 
+180 1000.00 
+181 1000.00 
+182 1000.00 
+183 1000.00 
+184 1000.00 
+185 1000.00 
+186 1000.00 
+187 1000.00 
+188 1000.00 
+189 1000.00 
+190 1000.00 
+191 1000.00 
+192 1000.00 
+193 1000.00 
+194 1000.00 
+195 1000.00 
+196 1000.00 
+197 1000.00 
+198 1000.00 
+199 1000.00 
+200 1000.00
+
+
