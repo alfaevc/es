@@ -348,9 +348,10 @@ class Energy_twin(object):
                 actor_loss = action_energy_loss(latent_action, latent_state)
 
             gradient = tape.gradient(actor_loss, action).numpy()
-            action = action - lr*gradient
+            action += lr*gradient
+            action = np.clip(action, -1., 1.)
         
-        return action
+        return action[0]
     '''
     def energy_min_action(self, actor, critic, state):
         param1 = actor.get_layer_i_param(0)
