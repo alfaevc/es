@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+import keras.backend as K
 from sklearn.preprocessing import PolynomialFeatures
 from itertools import product
 
@@ -12,6 +13,12 @@ def egreedy(x, e=0.01):
 
 def sigmoid(x):
     return 1/(1+np.exp(-x))
+
+def action_energy_loss(latent_actions, latent_states):
+    loss = K.mean(tf.exp(-tf.einsum('ij,ij->i', latent_actions, latent_states)))
+    return loss
+
+
 
 class Log(object):  
     def __init__(self, env):
@@ -329,6 +336,21 @@ class Energy_twin(object):
         # return sample_actions[np.argmin(energies)]
         return energies, sample_actions
 
+    def gd_energy_action(self, actor, critic, state, K=20, lr=0.05):
+        action = np.random.uniform(low=-1.0, high=1.0, size=(1,self.nA))
+        latent_state = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (1,1))
+        # actor_temp = tf.keras.models.clone_model(actor)
+
+        for _ in range(K):
+            with tf.GradientTape() as tape:
+                # V_update_vecs = tf.convert_to_tensor(V_update_vecs, dtype=tf.float32)
+                latent_action = actor(action, training=False)
+                actor_loss = action_energy_loss(latent_action, latent_state)
+
+            gradient = tape.gradient(actor_loss, action).numpy()
+            action = action - lr*gradient
+        
+        return action
     '''
     def energy_min_action(self, actor, critic, state):
         param1 = actor.get_layer_i_param(0)
@@ -351,10 +373,11 @@ class Energy_twin(object):
 
         while not done:
         # while not done and (steps < max_step):
-            energies, actions = self.energy_actions(self.actor, self.critic, state, K=self.nA*10)
-            action = actions[egreedy(energies)]
+            # energies, actions = self.energy_actions(self.actor, self.critic, state, K=self.nA*10)
+            # action = actions[egreedy(energies)]
             # action = actions[np.argmin(energies)]
             # action = self.energy_min_action(self.actor, self.critic, state)
+            action = self.gd_energy_action(self.actor, self.critic, state)
 
             state, reward, done, _ = self.env.step(action)
             G += reward * discount

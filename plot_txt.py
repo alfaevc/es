@@ -5,9 +5,12 @@ import matplotlib.pyplot as plt
 import re
 import numpy as np
 
+'''
 def main():
     n = 10
-    filename = "files/twin_energy_InvertedPendulumBulletEnv-v0.txt"
+    # filename = "files/twin_energy_InvertedPendulumBulletEnv-v0.txt"
+    filename = "files/energy uniform sampling lunar lander/twin_energy_LunarLanderContnuous-v2(1).txt"
+    # filename = "files/energy vertex sampling lunar lander only sample 5/twin_energy_LunarLanderContnuous-v2(1).txt"
     # outfile = "a2c.txt"
 
     # env_name = 'FetchPush-v1'
@@ -36,15 +39,40 @@ def main():
             res[k] = np.array(evals)
     
     ns = range(act_epoch)
+'''
 
-    avs = np.mean(res, axis=0)
-    maxs = np.max(res, axis=0)
-    mins = np.min(res, axis=0)
+def main():
+    env_name = 'LunarLanderContinuous-v2'
 
-    # method = "mixed"
+    energy_vertex_res = np.zeros((8, 165))
 
-    plt.fill_between(ns, mins, maxs, alpha=0.1)
-    plt.plot(ns, avs, '-o', markersize=1)
+    ev_seed = 8
+    ev_epochs = 165
+
+    ev_ns = k = range(ev_epochs)
+    ev_evals = []
+
+    for i in range(1,ev_seed+1):
+        filename = "files/energy_vertex_sampling_lunarlander_sample_9_actions/twin_energy_LunarLanderContinuous-v2({}).txt".format(i)
+
+        method = "AT"
+
+        with open(filename, "r") as f:
+            lines = f.readlines()
+            for j in range(ev_epochs):
+                l = list(filter(len, re.split(' |\*|\n', lines[j])))
+                ev_evals.append(float(l[-1]))
+        
+        energy_vertex_res[k] = np.array(ev_evals)
+    
+    
+    avs = np.mean(energy_vertex_res, axis=0)
+    maxs = np.max(energy_vertex_res, axis=0)
+    mins = np.min(energy_vertex_res, axis=0)
+
+
+    plt.fill_between(ev_ns, mins, maxs, alpha=0.1)
+    plt.plot(ev_ns, avs, '-o', markersize=1, label='Twin Energy Vertex')
 
     # plt.fill_between(ns, mins, maxs, alpha=0.1)
     # plt.plot(ns, ns, '-o', markersize=1, label='Shit')
@@ -54,8 +82,8 @@ def main():
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
 
-    plt.title("Energy Twin {0} ES {1}".format(method, env_name), fontsize = 20)
-    plt.savefig("plots/Energy twin {0} ES {1}".format(method, env_name))
+    plt.title("{0} ES {1}".format(method, env_name), fontsize = 20)
+    plt.savefig("plots/{0} ES {1}".format(method, env_name))
 
 
 if __name__ == '__main__':
