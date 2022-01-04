@@ -3,6 +3,8 @@ import tensorflow as tf
 import keras.backend as K
 from sklearn.preprocessing import PolynomialFeatures
 from itertools import product
+from scipy.optimize import minimize
+from scipy.optimize import Bounds
 
 def egreedy(x, e=0.01):
     k = x.size
@@ -359,7 +361,22 @@ class Energy_twin(object):
         latent_state = critic(np.expand_dims(state,0)).numpy()
         return np.dot(np.dot(param1, param2), latent_state.T)
     '''
-
+    def blackbox(self, action,actor, critic, state):#input action, output objective and gradient
+        latent_state = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (1,1))
+        with tf.GradientTape() as tape:
+            latent_action = actor(action, training=False)
+            actor_loss = action_energy_loss(latent_action, latent_state)
+        gradient = tape.gradient(actor_loss, action).numpy()
+        print('objective value: ',actor_loss,'gradient: ',gradient) 
+        return actor_loss,gradient
+    
+    def gd_energy_action_trust_region(self, actor, critic, state):
+        bounds = Bounds([-1.0]*(self.nA), [1.0]*(self.nA))
+        action = np.random.uniform(low=-1.0, high=1.0, size=(1,self.nA))
+        res = minimize(self.blackbox, action,args=(actor, critic, state), method='trust-constr', jac=True,tol=0.0001,
+                   options={'verbose': 0,'maxiter':100}, bounds=bounds)#default maxIter=1000
+        opt_action = res.x
+        return opt_action
     
     def F(self, theta, gamma=1, max_step=1e4):
         G = 0.0
