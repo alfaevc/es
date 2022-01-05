@@ -352,6 +352,7 @@ class Energy_twin(object):
             action = np.clip(action, -1., 1.)
         
         return action[0]
+    
     '''
     def energy_min_action(self, actor, critic, state):
         param1 = actor.get_layer_i_param(0)
