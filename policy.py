@@ -17,7 +17,7 @@ def sigmoid(x):
     return 1/(1+np.exp(-x))
 
 def action_energy_loss(latent_actions, latent_states):
-    loss = K.mean(tf.exp(-tf.einsum('ij,ij->i', latent_actions, latent_states)))
+    loss = -K.mean(tf.exp(-tf.einsum('ij,ij->i', latent_actions, latent_states)))
     return loss
 
 
@@ -375,7 +375,8 @@ class Energy_twin(object):
             actor_loss = action_energy_loss(latent_action, latent_state)
         # print('objective value: ', actor_loss)
         gradient = tape.gradient(actor_loss, a)
-        # print('objective value: ', actor_loss,'gradient: ', gradient) 
+        # print('objective value: ', actor_loss,'gradient: ', gradient)
+        print('objective value: ', actor_loss.numpy(),'gradient: ', gradient[0].numpy())
         return actor_loss.numpy(), gradient[0].numpy()
     
 
