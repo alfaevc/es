@@ -338,6 +338,7 @@ class Energy_twin(object):
         # return sample_actions[np.argmin(energies)]
         return energies, sample_actions
 
+    '''
     def gd_energy_action(self, actor, critic, state, K=20, lr=0.05):
         action = np.random.uniform(low=-1.0, high=1.0, size=(1,self.nA))
         latent_state = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (1,1))
@@ -355,27 +356,32 @@ class Energy_twin(object):
         
         return action[0]
     
-    '''
+    
     def energy_min_action(self, actor, critic, state):
         param1 = actor.get_layer_i_param(0)
         param2 = actor.get_layer_i_param(1)
         latent_state = critic(np.expand_dims(state,0)).numpy()
         return np.dot(np.dot(param1, param2), latent_state.T)
     '''
-    def blackbox(self, action,actor, critic, state):#input action, output objective and gradient
-        latent_state = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (1,1))
+    
+    def blackbox(self, action, actor, critic, state):#input action, output objective and gradient
+        #latent_state = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (1,1))
+        latent_state = critic(state)
         with tf.GradientTape() as tape:
             latent_action = actor(action, training=False)
             actor_loss = action_energy_loss(latent_action, latent_state)
-        gradient = tape.gradient(actor_loss, action).numpy()
-        print('objective value: ',actor_loss,'gradient: ',gradient) 
-        return actor_loss,gradient
+        gradient = tape.gradient(actor_loss, action)
+        print('objective value: ', actor_loss,'gradient: ', gradient) 
+        return actor_loss, gradient
     
+
     def gd_energy_action_trust_region(self, actor, critic, state):
         bounds = Bounds([-1.0]*(self.nA), [1.0]*(self.nA))
-        action = np.random.uniform(low=-1.0, high=1.0, size=(1,self.nA))
-        res = minimize(self.blackbox, action,args=(actor, critic, state), method='trust-constr', jac=True,tol=0.0001,
-                   options={'verbose': 0,'maxiter':100}, bounds=bounds)#default maxIter=1000
+        action = tf.random.uniform(shape=(1,self.nA), minval=-1.0, maxval=1.0)
+        print(action)
+        # action = np.random.uniform(low=-1.0, high=1.0, size=(1,self.nA))
+        res = minimize(self.blackbox, action, args=(actor, critic, tf.reshape(state, shape=(1,self.state_dim))), method='trust-constr', jac=True,tol=0.0001,
+                   options={'verbose': 0,'maxiter':10}, bounds=bounds)#default maxIter=1000
         opt_action = res.x
         return opt_action
     
@@ -396,7 +402,7 @@ class Energy_twin(object):
             # action = actions[egreedy(energies)]
             # action = actions[np.argmin(energies)]
             # action = self.energy_min_action(self.actor, self.critic, state)
-            action = self.gd_energy_action(self.actor, self.critic, state)
+            action = self.gd_energy_action_trust_region(self.actor, self.critic, state)
 
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
@@ -409,9 +415,10 @@ class Energy_twin(object):
         state = self.env.reset()
         done = False
         while not done:
-            energies, actions = self.energy_actions(actor, critic, state, K=self.nA*10)
-            action = actions[np.argmin(energies)]
+            # energies, actions = self.energy_actions(actor, critic, state, K=self.nA*10)
+            # action = actions[np.argmin(energies)]
             # action = self.energy_min_action(actor, critic, state)
+            action = self.gd_energy_action_trust_region(actor, critic, state)
 
             state, reward, done, _ = self.env.step(action)
             G += reward
