@@ -367,18 +367,21 @@ class Energy_twin(object):
     def blackbox(self, action, actor, critic, state):#input action, output objective and gradient
         #latent_state = np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (1,1))
         latent_state = critic(state)
+        a = tf.Variable(action)
         with tf.GradientTape() as tape:
-            latent_action = actor(action, training=False)
+            tape.watch(a)
+            latent_action = actor(a, training=False)
             actor_loss = action_energy_loss(latent_action, latent_state)
-        gradient = tape.gradient(actor_loss, action)
+        # print('objective value: ', actor_loss)
+        gradient = tape.gradient(actor_loss, a)
         print('objective value: ', actor_loss,'gradient: ', gradient) 
-        return actor_loss, gradient
+        return actor_loss.numpy(), gradient[0].numpy()
     
 
     def gd_energy_action_trust_region(self, actor, critic, state):
         bounds = Bounds([-1.0]*(self.nA), [1.0]*(self.nA))
         action = tf.random.uniform(shape=(1,self.nA), minval=-1.0, maxval=1.0)
-        print(action)
+        # print(action)
         # action = np.random.uniform(low=-1.0, high=1.0, size=(1,self.nA))
         res = minimize(self.blackbox, action, args=(actor, critic, tf.reshape(state, shape=(1,self.state_dim))), method='trust-constr', jac=True,tol=0.0001,
                    options={'verbose': 0,'maxiter':10}, bounds=bounds)#default maxIter=1000
