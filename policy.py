@@ -191,14 +191,14 @@ class GausNN(object):
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return means, tf.exp(logvars).numpy()
 
-    def attention_action(self, state, K=10):
-        state_out = self.nn(np.expand_dims(state,0)).numpy()
+    def attention_action(self, nn, state, K=10):
+        state_out = nn(np.expand_dims(state,0)).numpy()
         a_mean, a_v  = self.get_output(np.expand_dims(state_out, 0))
         mu, var = a_mean[0], a_v[0]
         actions = np.random.normal(mu, var, K)
-        fn = lambda a: np.dot(np.multiply(a-mu, var), a-mu)
+        fn = lambda a: np.dot(np.multiply(a-mu, 1/var), a-mu)
         energies = np.array(list(map(fn, actions)))
-        return actions[np.argmin(energies)]
+        return actions[np.argmax(energies)]
 
     def F(self, theta, gamma=.99, max_step=1e4):
         G = 0.0
@@ -209,10 +209,10 @@ class GausNN(object):
         self.nn.update_params(self.nn.theta2nnparams(theta, self.input_dim, self.nn.output_dim))
         while not done:
         # while not done and (steps < max_step):
-            a_mean, a_v  = self.get_output(self.nn(np.expand_dims(state, 0)).numpy())
+            # a_mean, a_v  = self.get_output(self.nn(np.expand_dims(state, 0)).numpy())
             # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
-            action = np.random.normal(a_mean[0], a_v[0])
-
+            # action = np.random.normal(a_mean[0], a_v[0])
+            action = self.attention_action(self.nn, state)
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
             discount *= gamma
@@ -224,9 +224,10 @@ class GausNN(object):
         state = self.env.reset()
         done = False
         while not done:
-            a_mean, a_v  = self.get_output(nn(np.expand_dims(state, 0)).numpy())
+            # a_mean, a_v  = self.get_output(nn(np.expand_dims(state, 0)).numpy())
             # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
-            action = np.random.normal(a_mean[0], a_v[0])
+            # action = np.random.normal(a_mean[0], a_v[0])
+            action = self.attention_action(nn, state)
 
             state, reward, done, _ = self.env.step(action)
             G += reward

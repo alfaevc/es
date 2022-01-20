@@ -95,6 +95,7 @@ def gradascent(theta0, policy, filename, method=None, sigma=1, eta=1e-3, max_epo
 def nn_gradascent(actor, policy, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
     theta = actor.nnparams2theta()
+    # actor.print_params()
     for i in range(max_epoch):
       if method == "AT":
         theta += eta * AT_gradient(theta, policy, sigma, N=N)

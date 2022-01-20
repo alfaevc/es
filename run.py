@@ -91,7 +91,7 @@ if __name__ == '__main__':
     nA, = env.action_space.shape
     # theta_dim = (state_dim + 1) * 2 * nA
     actor_layers = [2*nA]
-    critic_layers = [nA]
+    # critic_layers = [nA]
 
     b = 1
 
@@ -164,7 +164,7 @@ if __name__ == '__main__':
         # theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-        actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-3, max_epoch=200, N=N)
+        actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-3, max_epoch=max_epoch, N=N)
         #nn_test_video(pi, actor, env_name, method)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
