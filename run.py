@@ -80,7 +80,7 @@ if __name__ == '__main__':
     # env_name = 'Swimmer-v2'
     env_name = 'InvertedPendulumBulletEnv-v0'
 
-    outfile = "files/twin_energy_grad{}.txt".format(env_name)
+    outfile = "files/attention_energy_{}.txt".format(env_name)
     with open(outfile, "w") as f:
         f.write("")
 
@@ -90,7 +90,7 @@ if __name__ == '__main__':
     layers = []
     nA, = env.action_space.shape
     # theta_dim = (state_dim + 1) * 2 * nA
-    actor_layers = [nA]
+    actor_layers = [2*nA]
     critic_layers = [nA]
 
     b = 1
@@ -128,6 +128,10 @@ if __name__ == '__main__':
     print("The method is {}".format(method))
 
     for k in tqdm.tqdm(range(num_seeds)):
+        actor = NN(2*nA, layers=actor_layers)
+        actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+        actor.fit(np.random.standard_normal((b,2*nA)), np.random.standard_normal((b,2*nA)), epochs=1, batch_size=b, verbose=0)
+        '''
         actor = NN(nA, layers=actor_layers)
         actor.compile(optimizer=actor.optimizer, loss=actor.loss)
         actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
@@ -140,7 +144,9 @@ if __name__ == '__main__':
 
         pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
         theta_dim = pi.actor_theta_len + pi.critic_theta_len
-
+        '''
+        pi = policy.GausNN(env, actor, state_dim, nA)
+        theta_dim = pi.theta_len
         N = theta_dim
         # theta0 = np.random.standard_normal(size=theta_dim)
         #actor = NN(1, layers=layers)
@@ -155,10 +161,10 @@ if __name__ == '__main__':
         # print(np.array(list(map(fn, epsilons))))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+        # theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-        #actor, accum_rewards = es.nn_gradascent(actor, pi, method=None, sigma=1, eta=1e-3, max_epoch=200, N=N)
+        actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-3, max_epoch=200, N=N)
         #nn_test_video(pi, actor, env_name, method)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)

@@ -92,7 +92,7 @@ def gradascent(theta0, policy, filename, method=None, sigma=1, eta=1e-3, max_epo
       theta += eta * vanilla_gradient(theta, policy, N=N)
   return theta, accum_rewards
 
-def nn_gradascent(actor, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+def nn_gradascent(actor, policy, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
     theta = actor.nnparams2theta()
     for i in range(max_epoch):
@@ -107,6 +107,8 @@ def nn_gradascent(actor, policy, method=None, sigma=1, eta=1e-3, max_epoch=200, 
         actor.update_params(new_params)
         accum_rewards[i] = policy.eval(actor)
         print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))
+        with open(filename, "a") as f:
+          f.write("%.d %.2f \n" % (i, accum_rewards[i]))
 
     return actor, accum_rewards
 

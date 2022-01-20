@@ -17,7 +17,8 @@ def sigmoid(x):
     return 1/(1+np.exp(-x))
 
 def action_energy_loss(latent_actions, latent_states):
-    loss = -K.mean(tf.exp(-tf.einsum('ij,ij->i', latent_actions, latent_states)))
+    # loss = -K.mean(tf.exp(-tf.einsum('ij,ij->i', latent_actions, latent_states)))
+    loss = K.mean(tf.einsum('ij,ij->i', latent_actions, latent_states))
     return loss
 
 
@@ -174,6 +175,7 @@ class GausNN(object):
         self.max_logvar = max_logvar
         self.nA = nA
         self.input_dim = state_dim
+        self.theta_len = self.nn.nnparams2theta().size
 
     def get_output(self, output):
         """
@@ -188,6 +190,15 @@ class GausNN(object):
         logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
         logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
         return means, tf.exp(logvars).numpy()
+
+    def attention_action(self, state, K=10):
+        state_out = self.nn(np.expand_dims(state,0)).numpy()
+        a_mean, a_v  = self.get_output(np.expand_dims(state_out, 0))
+        mu, var = a_mean[0], a_v[0]
+        actions = np.random.normal(mu, var, K)
+        fn = lambda a: np.dot(np.multiply(a-mu, var), a-mu)
+        energies = np.array(list(map(fn, actions)))
+        return actions[np.argmin(energies)]
 
     def F(self, theta, gamma=.99, max_step=1e4):
         G = 0.0
@@ -325,6 +336,20 @@ class Energy_twin(object):
         self.nA = nA
         self.actor_theta_len = actor.nnparams2theta().size
         self.critic_theta_len = critic.nnparams2theta().size
+    
+    def get_output(self, output):
+        """
+        Argument:
+          output: tf variable representing the output of the keras models, i.e., model.output
+        Return:
+          mean and log variance tf tensors
+        Note that you will still have to call sess.run on these tensors in order to get the actual output.
+        """
+        means = output[:, :self.nA]
+        raw_vs = output[:, self.nA:]
+        logvars = self.max_logvar - tf.nn.softplus(self.max_logvar - raw_vs)
+        logvars = self.min_logvar + tf.nn.softplus(logvars - self.min_logvar)
+        return means, tf.exp(logvars).numpy()
 
     def energy_actions(self, actor, critic, state, K=10):
         #sample_actions = np.array(list(product([-1,0,1], repeat=self.nA)))
@@ -376,7 +401,7 @@ class Energy_twin(object):
         # print('objective value: ', actor_loss)
         gradient = tape.gradient(actor_loss, a)
         # print('objective value: ', actor_loss,'gradient: ', gradient)
-        print('objective value: ', actor_loss.numpy(),'gradient: ', gradient[0].numpy())
+        # print('objective value: ', actor_loss.numpy(),'gradient: ', gradient[0].numpy())
         return actor_loss.numpy(), gradient[0].numpy()
     
 
@@ -385,11 +410,12 @@ class Energy_twin(object):
         action = tf.random.uniform(shape=(self.nA,), minval=-1.0, maxval=1.0)
         # print(action)
         # action = np.random.uniform(low=-1.0, high=1.0, size=(1,self.nA))
-        res = minimize(self.blackbox, action, args=(actor, critic, state), method='trust-constr', jac=True,tol=0.0001,
+        res = minimize(self.blackbox, action, args=(actor, critic, state), method='trust-constr', jac=True,tol=0.1,
                    options={'verbose': 0,'maxiter':10}, bounds=bounds)#default maxIter=1000
         opt_action = res.x
         return opt_action
-    
+
+
     def F(self, theta, gamma=1, max_step=1e4):
         G = 0.0
         state = self.env.reset()

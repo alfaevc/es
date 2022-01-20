@@ -42,28 +42,31 @@ def main():
 '''
 
 def main():
-    env_name = 'LunarLanderContinuous-v2'
+    env_name = "InvertedPendulumBulletEnv-v0"
+    # env_name = 'LunarLanderContinuous-v2'
 
-    energy_vertex_res = np.zeros((8, 165))
+    energy_vertex_res = np.zeros((3, 101))
 
-    ev_seed = 8
-    ev_epochs = 165
+    ev_seed = 3
+    ev_epochs = 101
 
     ev_ns = k = range(ev_epochs)
-    ev_evals = []
+    # ev_evals = []
 
-    for i in range(1,ev_seed+1):
-        filename = "files/energy_vertex_sampling_lunarlander_sample_9_actions/twin_energy_LunarLanderContinuous-v2({}).txt".format(i)
+    for i in range(ev_seed):
+        ev_evals = []
+        filename = "files/twin_energy_gradInvertedPendulumBulletEnv-v0.txt"
+        #filename = "files/energy_vertex_sampling_lunarlander_sample_9_actions/twin_energy_LunarLanderContinuous-v2({}).txt".format(i)
 
         method = "AT"
 
         with open(filename, "r") as f:
             lines = f.readlines()
-            for j in range(ev_epochs):
+            for j in range(i*(ev_epochs+1)+1, i*(ev_epochs+1)+ev_epochs+1):
                 l = list(filter(len, re.split(' |\*|\n', lines[j])))
                 ev_evals.append(float(l[-1]))
         
-        energy_vertex_res[k] = np.array(ev_evals)
+            energy_vertex_res[i] = np.array(ev_evals)
     
     
     avs = np.mean(energy_vertex_res, axis=0)
@@ -83,7 +86,7 @@ def main():
     plt.ylabel('Return', fontsize = 15)
 
     plt.title("{0} ES {1}".format(method, env_name), fontsize = 20)
-    plt.savefig("plots/{0} ES {1}".format(method, env_name))
+    plt.savefig("plots/Twin Energy {0} ES {1}".format(method, env_name))
 
 
 if __name__ == '__main__':
