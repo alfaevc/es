@@ -37,11 +37,12 @@ class NN(tf.keras.Model):
   
   def theta2nnparams(self, theta, input_dim, output_dim):
     params = []
-    self.print_params()
-    print(theta)
+    # self.print_params()
+
     end_index = input_dim * self.ls[0]
     params.append(theta[:end_index].reshape((input_dim, self.ls[0])))
     start_index = end_index
+    
     for i in range(len(self.ls)-1):
       end_index += self.ls[i]
       params.append(theta[start_index:end_index])

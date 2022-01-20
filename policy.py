@@ -193,9 +193,9 @@ class GausNN(object):
 
     def attention_action(self, nn, state, K=10):
         state_out = nn(np.expand_dims(state,0)).numpy()
-        a_mean, a_v  = self.get_output(np.expand_dims(state_out, 0))
+        a_mean, a_v  = self.get_output(state_out)
         mu, var = a_mean[0], a_v[0]
-        actions = np.random.normal(mu, var, K)
+        actions = np.tanh(np.random.normal(mu, var, (K, self.nA)))
         fn = lambda a: np.dot(np.multiply(a-mu, 1/var), a-mu)
         energies = np.array(list(map(fn, actions)))
         return actions[np.argmax(energies)]
