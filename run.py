@@ -87,9 +87,8 @@ if __name__ == '__main__':
     env = gym.make(env_name)
     state_dim = env.reset().size
     # theta_dim = state_dim + 1
-    layers = []
     nA, = env.action_space.shape
-    # theta_dim = (state_dim + 1) * 2 * nA
+    
     actor_layers = [2*nA]
     # critic_layers = [nA]
 
@@ -116,21 +115,19 @@ if __name__ == '__main__':
 
     # theta_dim=round((state_dim+nA)*(1+(state_dim+nA+1)/2))#num of polynomial terms up to degree 2
     # pi = policy.Energy_polyn(env, state_dim, nA=nA)
-    # pi = policy.Gaus(env, state_dim, nA=nA)
     # pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
     # theta_dim = pi.actor_theta_len + pi.critic_theta_len
 
+    theta_dim = (state_dim + 1) * 2 * nA
+
     num_seeds = 5
-    max_epoch = 101
+    max_epoch = 201
     # max_epoch = 301
     res = np.zeros((num_seeds, max_epoch))
     method = "AT"
     print("The method is {}".format(method))
 
     for k in tqdm.tqdm(range(num_seeds)):
-        actor = NN(2*nA, layers=actor_layers)
-        actor.compile(optimizer=actor.optimizer, loss=actor.loss)
-        actor.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,2*nA)), epochs=1, batch_size=b, verbose=0)
         '''
         actor = NN(nA, layers=actor_layers)
         actor.compile(optimizer=actor.optimizer, loss=actor.loss)
@@ -145,10 +142,16 @@ if __name__ == '__main__':
         pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
         theta_dim = pi.actor_theta_len + pi.critic_theta_len
         '''
-        pi = policy.GausNN(env, actor, state_dim, nA)
-        theta_dim = pi.theta_len
+        pi = policy.Gaus(env, state_dim, nA=nA)
+
+        #actor = NN(2*nA, layers=actor_layers)
+        #actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+        #actor.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,2*nA)), epochs=1, batch_size=b, verbose=0)
+        # pi = policy.GausNN(env, actor, state_dim, nA)
+        # theta_dim = pi.theta_len
+
         N = theta_dim
-        # theta0 = np.random.standard_normal(size=theta_dim)
+
         #actor = NN(1, layers=layers)
         #actor = NN(nA*2, layers=layers)
         #actor.compile(optimizer=actor.optimizer, loss=actor.loss)
@@ -163,8 +166,9 @@ if __name__ == '__main__':
             f.write("Seed {}:\n".format(k))
         # theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-        # theta, accum_rewards = es.gradascent(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-        actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-3, max_epoch=max_epoch, N=N)
+        theta0 = np.random.standard_normal(size=theta_dim)
+        theta, accum_rewards = es.gradascent(theta0, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+        # actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         #nn_test_video(pi, actor, env_name, method)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
