@@ -199,7 +199,7 @@ class GausNN(object):
     def attention_action(self, nn, state, K=10):
         a_mean, a_v  = self.get_output(nn(np.expand_dims(state,0)).numpy())
         mu, var = a_mean[0], a_v[0]
-        actions = np.random.normal(mu, var, (K*self.nA, self.nA))
+        actions = np.tanh(np.random.normal(mu, var, (K*self.nA, self.nA)))
         fn = lambda a: np.dot(np.multiply(a-mu, 1/var), a-mu)
         energies = np.array(list(map(fn, actions)))
         return actions[np.argmax(energies)]
@@ -216,8 +216,8 @@ class GausNN(object):
             # a_mean, a_v  = self.get_output(self.nn(np.expand_dims(state, 0)).numpy())
             # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
             # action = np.random.normal(a_mean[0], a_v[0])
-            action = self.sample_action(self.nn, state)
-            # action = self.attention_action(self.nn, state)
+            # action = self.sample_action(self.nn, state)
+            action = self.attention_action(self.nn, state)
             state, reward, done, _ = self.env.step(action)
             G += reward * discount
             discount *= gamma
@@ -232,8 +232,8 @@ class GausNN(object):
             # a_mean, a_v  = self.get_output(nn(np.expand_dims(state, 0)).numpy())
             # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
             # action = np.random.normal(a_mean[0], a_v[0])
-            action = self.sample_action(nn, state)
-            # action = self.attention_action(nn, state)
+            # action = self.sample_action(nn, state)
+            action = self.attention_action(nn, state)
 
             state, reward, done, _ = self.env.step(action)
             G += reward
