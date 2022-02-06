@@ -86,7 +86,7 @@ def get_output(output):
     logvars = min_logvar + tf.nn.softplus(logvars - min_logvar)
     return means, tf.exp(logvars).numpy()
 
-def F(theta , gamma=1, max_step=5e3):
+def F(theta, gamma=1, max_step=5e3):
     env = gym.make(env_name)#this takes no time
     nA, = env.action_space.shape
     G = 0.0

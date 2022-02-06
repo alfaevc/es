@@ -41,6 +41,7 @@ def F(theta, gamma=1, max_step=1e4):
     actor_theta_len = actor.nnparams2theta().size
 
     steps_count=0
+    
     G = 0.0
     done = False
     discount = 1

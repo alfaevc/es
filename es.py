@@ -1,26 +1,179 @@
 import numpy as np
 
+from networks import NN
+
+import gym
+import pybullet_envs
+import time
+
+import math
+import multiprocessing as mp
+from itertools import repeat
+import tensorflow as tf
+# from itertools import product
+
+"""fitness functions for parallel
+"""
+def get_output(output):
+    nA=int(round(output.shape[1]/2))
+    min_logvar=1
+    max_logvar=3
+    means = output[:, 0:nA]
+    raw_vs = output[:, nA:]
+    logvars = max_logvar - tf.nn.softplus(max_logvar - raw_vs)
+    logvars = min_logvar + tf.nn.softplus(logvars - min_logvar)
+    return means, tf.exp(logvars).numpy()
+
+def gaus_F(theta, env_name, gamma=1, max_step=5e3):
+    env = gym.make(env_name)#this takes no time
+    nA, = env.action_space.shape
+    G = 0.0
+    done = False
+    discount = 1
+    steps = 0
+    state = env.reset()
+    a_dim = np.arange(nA)
+    state_dim = state.size
+    steps_count=0#cannot use global var here because subprocesses do not have access to global var
+    # while not done:
+    while not done and (steps < max_step):
+        # WRITE CODE HERE
+        fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
+                        theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
+        mvs = np.array(list(map(fn, a_dim))).flatten()
+        a_mean, a_v  = get_output(np.expand_dims(mvs, 0))
+        action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+        # action = np.random.normal(a_mean[0], a_v[0])
+
+        state, reward, done, _ = env.step(action)
+        steps_count+=1
+        G += reward * discount
+        discount *= gamma
+        steps += 1
+    return G,steps_count
+
+def gaus_F_arr(epsilons, env_name, sigma, theta):
+    grad = np.zeros(epsilons.shape)
+    steps_count = 0
+    for i in range(epsilons.shape[0]):#for loop inefficient. to be improved
+        output1, time1 = gaus_F(theta + sigma * epsilons[i], env_name)
+        output2, time2 = gaus_F(theta - sigma * epsilons[i], env_name)
+        grad[i] = (output1 - output2) * epsilons[i]
+        steps_count += time1+time2
+    grad = np.average(grad,axis=0)/sigma/2
+    return [grad,steps_count]
+        
+    #fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
+    #return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
+
+def gaus_eval(theta, env_name):
+    env = gym.make(env_name)#this takes no time
+    nA, = env.action_space.shape
+    G = 0.0
+    done = False
+    steps = 0
+    state = env.reset()
+    a_dim = np.arange(nA)
+    state_dim = state.size
+    while not done:
+        # WRITE CODE HERE
+        fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
+                        theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
+        mvs = np.array(list(map(fn, a_dim))).flatten()
+        a_mean, a_v  = get_output(np.expand_dims(mvs, 0))
+        action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
+        # action = np.random.normal(a_mean[0], a_v[0])
+
+        state, reward, done, _ = env.step(action)
+        G += reward
+        steps += 1
+    return G
+
+def energy_actions(actor, critic, state, nA, K=10):
+    sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,nA))
+    latent_actions, latent_states = actor(sample_actions).numpy(), np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
+    energies = np.einsum('ij,ij->i', latent_actions, latent_states)
+    return sample_actions[np.argmin(energies)]
+     
+def energy_min_action(actor, critic, state):
+    param1 = actor.get_layer_i_param(0)
+    param2 = actor.get_layer_i_param(1)
+    latent_state = critic(np.expand_dims(state,0)).numpy()
+    return np.dot(np.dot(param1, param2), latent_state.T)
+
+def twin_F(theta, env_name, gamma=1, max_step=1e4):
+    env = gym.make(env_name)
+    nA, = env.action_space.shape
+    state = env.reset()
+    state_dim = state.size
+
+    b=1
+    actor = NN(nA, layers=[2*nA])
+    actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+    actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    critic = NN(nA, layers=[nA])
+    critic.compile(optimizer=critic.optimizer, loss=actor.loss)
+    critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    actor_theta_len = actor.nnparams2theta().size
+
+    steps_count=0
+    
+    G = 0.0
+    done = False
+    discount = 1
+    actor.update_params(actor.theta2nnparams(theta[:actor_theta_len], nA, nA))
+    critic.update_params(critic.theta2nnparams(theta[actor_theta_len:], state_dim, nA))
+    while not done:
+        action = energy_actions(actor, critic, state, nA, K=nA*10)
+        # action = energy_min_action(actor, critic, state)
+        state, reward, done, _ = env.step(action)
+        G += reward * discount
+        discount *= gamma
+        steps_count+=1
+    return G, steps_count
+
+def twin_eval(theta, env_name):
+    env = gym.make(env_name)
+    nA, = env.action_space.shape
+    state = env.reset()
+    state_dim = state.size
+
+    b=1
+    actor = NN(nA, layers=[2*nA])
+    actor.compile(optimizer=actor.optimizer, loss=actor.loss)
+    actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    critic = NN(nA, layers=[nA])
+    critic.compile(optimizer=critic.optimizer, loss=actor.loss)
+    critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    actor_theta_len = actor.nnparams2theta().size
+
+    G = 0.0
+    done = False
+    actor.update_params(actor.theta2nnparams(theta[:actor_theta_len], nA, nA))
+    critic.update_params(critic.theta2nnparams(theta[actor_theta_len:], state_dim, nA))
+    while not done:
+        action = energy_actions(actor, critic, state, nA, K=nA*10)
+        #action = energy_min_action(actor, critic, state)
+        state, reward, done, _ = env.step(action)
+        G += reward
+    return G
+
+def twin_F_arr(epsilons, sigma, theta, env_name):
+    grad = np.zeros(epsilons.shape)
+    steps_count = 0
+    for i in range(epsilons.shape[0]):
+        #can be made more efficient. but would not improve runtime, since only loop <=8 times
+        output1, time1 = twin_F(theta + sigma * epsilons[i], env_name)
+        output2, time2 = twin_F(theta - sigma * epsilons[i], env_name)
+        grad[i] = (output1 - output2) * epsilons[i]
+        steps_count += time1+time2
+    grad = np.average(grad,axis=0)/sigma/2
+    #fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
+    #return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
+    return [grad,steps_count]
 
 """### AT vs FD
 """
-
-def vanilla_gradient(theta, policy, sigma=1, N=100):
-  epsilons=orthogonal_epsilons(N,theta.size)
-  fn = lambda x: policy.F(theta + sigma * x) * x
-  return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
-
-def FD_gradient(theta, policy, sigma=1, N=100):
-  # epsilons = np.random.standard_normal(size=(N, theta.size))
-  epsilons=orthogonal_epsilons(N,theta.size)
-  G = policy.F(theta)
-  fn = lambda x: (policy.F(theta + sigma * x) - G) * x
-  return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
-
-def AT_gradient(theta, policy, sigma=1, N=100):
-  #epsilons = np.random.standard_normal(size=(N, theta.size))
-  epsilons=orthogonal_epsilons(N,theta.size)
-  fn = lambda x: (policy.F(theta + sigma * x) - policy.F(theta - sigma * x)) * x
-  return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
 
 def orthogonal_epsilons(N,dim):
     #assume input N is a multiple of dim. 
@@ -39,10 +192,55 @@ def orthogonal_epsilons(N,dim):
     return epsilons_N
 
 def hessian_gaussian_smoothing(theta, policy, sigma=1, N=100):
-  epsilons = orthogonal_epsilons(N,theta.size)
-  fn = lambda x: (np.outer(x,x)- np.identity(theta.size))*policy.F(theta + sigma * x)/(sigma**2)
-  hessian = np.mean(np.array(list(map(fn, epsilons))), axis=0) 
-  return hessian
+    epsilons = orthogonal_epsilons(N,theta.size)
+    fn = lambda x: (np.outer(x,x)- np.identity(theta.size))*policy.F(theta + sigma * x)/(sigma**2)
+    hessian = np.mean(np.array(list(map(fn, epsilons))), axis=0) 
+    return hessian
+
+def vanilla_gradient(theta, policy, sigma=1, N=100):
+    epsilons=orthogonal_epsilons(N,theta.size)
+    fn = lambda x: policy.F(theta + sigma * x) * x
+    return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
+
+def FD_gradient(theta, policy, sigma=1, N=100):
+    # epsilons = np.random.standard_normal(size=(N, theta.size))
+    epsilons=orthogonal_epsilons(N,theta.size)
+    G = policy.F(theta)
+    fn = lambda x: (policy.F(theta + sigma * x) - G) * x
+    return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
+
+def AT_gradient(theta, policy, sigma=1, N=100):
+    #epsilons = np.random.standard_normal(size=(N, theta.size))
+    epsilons=orthogonal_epsilons(N,theta.size)
+    fn = lambda x: (policy.F(theta + sigma * x) - policy.F(theta - sigma * x)) * x
+    return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
+
+def collect_result(result):
+    result_list.append(result[0])
+    steps_list.append(result[1]) 
+
+def AT_gradient_parallel(theta, F, env_name, sigma=1, N=100):
+    numCPU=mp.cpu_count()
+    pool=mp.Pool(numCPU)
+    jobs=math.ceil(N/numCPU)
+    if math.floor(N/numCPU) >= 0.8*N/numCPU:
+        jobs = math.floor(N/numCPU)
+    # N=jobs*numCPU
+
+    epsilons=orthogonal_epsilons(N,theta.size)
+    global result_list#must be global for callback function to edit
+    result_list = []
+    global steps_list
+    steps_list = []
+    for i in range(numCPU):
+        pool.apply_async(F, args = (epsilons[i*jobs:(i+1)*jobs], env_name, sigma, theta),callback=collect_result)
+    pool.close()
+    pool.join()
+    #print('AT grad: ',np.mean(result_list))
+    # result_list = F_arr(epsilons,sigma,theta)
+    #results=pool.starmap(F_arr,zip(list(repeat(epsilons[0],numCPU)),list(repeat(sigma,numCPU)),list(repeat(theta,numCPU))))
+    return np.mean(result_list)    
+
 
 def choose_covariate(theta, policy, sigma=1, N=100):
     grad=AT_gradient(theta, policy, sigma=sigma, N=2*N)
@@ -54,55 +252,50 @@ def choose_covariate(theta, policy, sigma=1, N=100):
     MSE_FD+=(2.5*sigma**4/N) * diag_hess @ diag_hess
     choice = "AT" if (2*N/(N+1))*MSE_AT > MSE_FD else "FD"
     return choice, MSE_FD, MSE_AT
-    
-    
+
+'''
 def gradascent_autoSwitch(theta0, policy, method=None, sigma=0.1, eta=1e-2, max_epoch=200, N=100):
-  theta = np.copy(theta0)
-  accum_rewards = np.zeros(max_epoch)
-  for i in range(max_epoch):
-    accum_rewards[i] = policy.eval(theta)
-    print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
-    if i%10==0:#update method every 20 iterations
-      choice, MSE_FD, MSE_AT = choose_covariate(theta,policy,sigma,N=theta.size*5)
-      method=choice
-      print("method updated to: ", method,', MSE of FD is ', MSE_FD,', MSE OF AT is ', MSE_AT)    
-    
-    if method == "AT":
-      theta += eta * AT_gradient(theta, policy, sigma, N=N)
-    else:
-      theta += eta * FD_gradient(theta, policy, sigma, N=2*N)#make # of queries for FD and AT the same   
+    theta = np.copy(theta0)
+    accum_rewards = np.zeros(max_epoch)
+    for i in range(max_epoch):
+      accum_rewards[i] = policy.eval(theta)
+      print("The return for episode {0} is {1}".format(i, accum_rewards[i]))
+      if i%10==0:#update method every 20 iterations
+        choice, MSE_FD, MSE_AT = choose_covariate(theta,policy,sigma,N=theta.size*5)
+        method=choice
+        print("method updated to: ", method,', MSE of FD is ', MSE_FD,', MSE OF AT is ', MSE_AT)    
+      
+      if method == "AT":
+        theta += eta * AT_gradient(theta, policy, sigma, N=N)
+      else:
+        theta += eta * FD_gradient(theta, policy, sigma, N=2*N)#make # of queries for FD and AT the same   
 
-  return theta, accum_rewards, method
+    return theta, accum_rewards, method
+'''
 
-def gradascent(theta0, policy, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
-  theta = np.copy(theta0)
-  accum_rewards = np.zeros(max_epoch)
-  for i in range(max_epoch): 
-    accum_rewards[i] = policy.eval(theta)
-    if i%1==0:
-      print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))    
-      with open(filename, "a") as f:
-        f.write("%.d %.2f \n" % (i, accum_rewards[i]))
-    
-    if method == "AT":
-      theta += eta * AT_gradient(theta, policy, sigma, N=N)
-    elif method == "FD":
-      theta += eta * FD_gradient(theta, policy, sigma, N=N)
-    else: #vanilla
-      theta += eta * vanilla_gradient(theta, policy, N=N)
-  return theta, accum_rewards
 
-def nn_gradascent(actor, policy, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+
+def gradascent(theta0, policy, filename, grad, F, sigma=1, eta=1e-3, max_epoch=200, N=100):
+    theta = np.copy(theta0)
+    accum_rewards = np.zeros(max_epoch)
+    for i in range(max_epoch): 
+      accum_rewards[i] = policy.eval(theta)
+      if i%1==0:
+        print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))    
+        with open(filename, "a") as f:
+          f.write("%.d %.2f \n" % (i, accum_rewards[i]))
+      
+
+      theta += eta * grad(theta, F, policy.env_name, sigma, N=N)
+
+    return theta, accum_rewards
+
+def nn_gradascent(actor, policy, filename, grad, F, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
     theta = actor.nnparams2theta()
     # actor.print_params()
-    for i in range(max_epoch):
-      if method == "AT":
-        theta += eta * AT_gradient(theta, policy, sigma, N=N)
-      elif method == "FD":
-        theta += eta * FD_gradient(theta, policy, sigma, N=N)
-      else: #vanilla
-        theta += eta * vanilla_gradient(theta, policy, N=N)
+    for i in range(max_epoch):  
+      theta += eta * grad(theta, F, sigma, N=N)
       if i%1==0:
         new_params = actor.theta2nnparams(theta, policy.input_dim, policy.nn.output_dim)
         actor.update_params(new_params)
@@ -113,7 +306,7 @@ def nn_gradascent(actor, policy, filename, method=None, sigma=1, eta=1e-3, max_e
 
     return actor, accum_rewards
 
-def nn_twin_gradascent(actor, critic, policy, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
+def nn_twin_gradascent(actor, critic, policy, filename, grad, F, eval, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
 
     # print(actor.nnparams2theta().size)
@@ -123,12 +316,7 @@ def nn_twin_gradascent(actor, critic, policy, filename, method=None, sigma=1, et
     theta = np.concatenate((actor.nnparams2theta(), critic.nnparams2theta()))
     # print(theta.size)
     for i in range(max_epoch):
-      if method == "AT":
-        theta += eta * AT_gradient(theta, policy, sigma, N=N)
-      elif method == "FD":
-        theta += eta * FD_gradient(theta, policy, sigma, N=N)
-      else: #vanilla
-        theta += eta * vanilla_gradient(theta, policy, N=N)
+      theta += eta * grad(theta, F, sigma, N=N)
       if i%1==0:
         theta_action = theta[:policy.actor_theta_len]
         theta_state = theta[policy.actor_theta_len:]

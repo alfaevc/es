@@ -64,8 +64,9 @@ class Log(object):
         return total_reward
 
 class Gaus(object):
-    def __init__(self, env, state_dim, nA, min_logvar=1, max_logvar=5):
+    def __init__(self, env, env_name, state_dim, nA, min_logvar=1, max_logvar=5):
         self.env = env
+        self.env_name = env_name
         self.min_logvar = min_logvar
         self.max_logvar = max_logvar
         self.nA = nA

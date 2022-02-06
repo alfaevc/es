@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
-
 # -*- coding: utf-8 -*-
 import os 
 import tqdm
@@ -16,6 +14,9 @@ import matplotlib.pyplot as plt
 import gym
 import pybullet_envs
 
+import time
+
+time1=time.time()
 
 
 """### AT vs FD
@@ -77,22 +78,24 @@ def nn_test_video(policy, actor, env_name, method):
 if __name__ == '__main__':
     # env_name = 'FetchPush-v1'
     # env_name = 'HalfCheetah-v2'
-    # env_name = 'Swimmer-v2'
-    env_name = 'InvertedPendulumBulletEnv-v0'
+    env_name = 'Swimmer-v2'
+    # env_name = 'InvertedPendulumBulletEnv-v0'
 
-    outfile = "files/attention_energy_{}.txt".format(env_name)
+    outfile = "files/gaus_parallel_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
 
     env = gym.make(env_name)
     state_dim = env.reset().size
+    print("The state dimension is " + str(state_dim))
     # theta_dim = state_dim + 1
     nA, = env.action_space.shape
-    
+    print("The action dimension is " + str(nA))
+
     actor_layers = [2*nA]
     # critic_layers = [nA]
 
-    b = 1
+    # b = 1
 
     # actor = NN(nA, layers=actor_layers)
     # actor.compile(optimizer=actor.optimizer, loss=actor.loss)
@@ -118,7 +121,7 @@ if __name__ == '__main__':
     # pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
     # theta_dim = pi.actor_theta_len + pi.critic_theta_len
 
-    # theta_dim = (state_dim + 1) * 2 * nA
+    theta_dim = (state_dim + 1) * 2 * nA
 
     num_seeds = 5
     max_epoch = 201
@@ -141,13 +144,17 @@ if __name__ == '__main__':
         pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
         theta_dim = pi.actor_theta_len + pi.critic_theta_len
         '''
-        #pi = policy.Gaus(env, state_dim, nA=nA)
+        pi = policy.Gaus(env, env_name, state_dim, nA=nA)
 
+        print("Theta dimension is " + str(theta_dim))
+
+        '''
         actor = NN(2*nA, layers=actor_layers)
         actor.compile(optimizer=actor.optimizer, loss=actor.loss)
         actor.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,2*nA)), epochs=1, batch_size=b, verbose=0)
         pi = policy.GausNN(env, actor, state_dim, nA)
         theta_dim = pi.theta_len
+        '''
 
         N = theta_dim
 
@@ -165,12 +172,15 @@ if __name__ == '__main__':
             f.write("Seed {}:\n".format(k))
         # theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-        # theta0 = np.random.standard_normal(size=theta_dim)
-        # theta, accum_rewards = es.gradascent(theta0, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
-        actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
-        #nn_test_video(pi, actor, env_name, method)
+        theta0 = np.random.standard_normal(size=theta_dim)
+        theta, accum_rewards = es.gradascent(theta0, pi, outfile, es.AT_gradient_parallel, es.gaus_F_arr, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+        # actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+        # nn_test_video(pi, actor, env_name, method)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
+
+    time2=time.time()
+    f.write("Time elapsed {}:\n".format(time2-time1))
 
     avs = np.mean(res, axis=0)
     maxs = np.max(res, axis=0)
@@ -188,16 +198,8 @@ if __name__ == '__main__':
 
     plt.title("Energy Twin {0} ES".format(method), fontsize = 24)
     plt.savefig("plots/Energy twin {0} ES {1}".format(method, env_name))
-  
 
 
-# In[ ]:
-
-
-
-
-
-# In[ ]:
 
 
 
