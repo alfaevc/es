@@ -319,6 +319,7 @@ def nn_twin_gradascent(actor, critic, policy, filename, grad, F, sigma=1, eta=1e
     theta = np.concatenate((actor.nnparams2theta(), critic.nnparams2theta()))
     # print(theta.size)
     for i in range(max_epoch):
+      # theta += eta * grad(theta, policy, sigma, N=N)
       theta += eta * grad(theta, F, sigma, N=N)
       if i%1==0:
         theta_action = theta[:policy.actor_theta_len]
