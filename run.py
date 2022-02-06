@@ -83,7 +83,7 @@ if __name__ == '__main__':
     # env_name = 'Swimmer-v2'
     env_name = 'InvertedPendulumBulletEnv-v0'
 
-    outfile = "files/gaus_parallel_{}.txt".format(env_name+str(time.time()))
+    outfile = "files/twin_parallel_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
 
