@@ -107,13 +107,16 @@ def twin_F(theta, env_name, gamma=1, max_step=1e4):
     state = env.reset()
     state_dim = state.size
 
-    b=1
-    actor = NN(nA, layers=[2*nA])
-    actor.compile(optimizer=actor.optimizer, loss=actor.loss)
-    actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
-    critic = NN(nA, layers=[nA])
-    critic.compile(optimizer=critic.optimizer, loss=actor.loss)
-    critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    actor = NN(nA, nA, layers=[nA])
+    actor_theta = np.random.normal(size=(actor.theta_len,))
+    actor(tf.keras.Input(shape=(nA,)))
+    actor.update_params(actor.theta2nnparams(actor_theta, nA, nA))
+    
+    critic = NN(state_dim, nA, layers=[nA])
+    critic_theta = np.random.normal(size=(critic.theta_len,))
+    critic(tf.keras.Input(shape=(state_dim,)))
+    critic.update_params(critic.theta2nnparams(critic_theta, state_dim, nA))
+
     actor_theta_len = actor.nnparams2theta().size
 
     steps_count=0
@@ -306,7 +309,7 @@ def nn_gradascent(actor, policy, filename, grad, F, sigma=1, eta=1e-3, max_epoch
 
     return actor, accum_rewards
 
-def nn_twin_gradascent(actor, critic, policy, filename, grad, F, eval, sigma=1, eta=1e-3, max_epoch=200, N=100):
+def nn_twin_gradascent(actor, critic, policy, filename, grad, F, sigma=1, eta=1e-3, max_epoch=200, N=100):
     accum_rewards = np.zeros(max_epoch)
 
     # print(actor.nnparams2theta().size)

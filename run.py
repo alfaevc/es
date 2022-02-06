@@ -10,6 +10,8 @@ import es
 import policy
 from networks import NN
 
+import tensorflow as tf
+
 import matplotlib.pyplot as plt
 import gym
 import pybullet_envs
@@ -78,8 +80,8 @@ def nn_test_video(policy, actor, env_name, method):
 if __name__ == '__main__':
     # env_name = 'FetchPush-v1'
     # env_name = 'HalfCheetah-v2'
-    env_name = 'Swimmer-v2'
-    # env_name = 'InvertedPendulumBulletEnv-v0'
+    # env_name = 'Swimmer-v2'
+    env_name = 'InvertedPendulumBulletEnv-v0'
 
     outfile = "files/gaus_parallel_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
@@ -95,7 +97,7 @@ if __name__ == '__main__':
     actor_layers = [2*nA]
     # critic_layers = [nA]
 
-    # b = 1
+    b = 1
 
     # actor = NN(nA, layers=actor_layers)
     # actor.compile(optimizer=actor.optimizer, loss=actor.loss)
@@ -121,7 +123,7 @@ if __name__ == '__main__':
     # pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
     # theta_dim = pi.actor_theta_len + pi.critic_theta_len
 
-    theta_dim = (state_dim + 1) * 2 * nA
+    # theta_dim = (state_dim + 1) * 2 * nA
 
     num_seeds = 5
     max_epoch = 201
@@ -130,21 +132,24 @@ if __name__ == '__main__':
     print("The method is {}".format(method))
 
     for k in tqdm.tqdm(range(num_seeds)):
-        '''
-        actor = NN(nA, layers=actor_layers)
-        actor.compile(optimizer=actor.optimizer, loss=actor.loss)
-        actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
 
-        critic = NN(nA, layers=critic_layers)
-        critic.compile(optimizer=critic.optimizer, loss=actor.loss)
-        critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+        actor = NN(nA, nA, layers=[nA])
+        actor_theta = np.random.normal(size=(actor.theta_len,))
+        actor(tf.keras.Input(shape=(nA,)))
+        actor.update_params(actor.theta2nnparams(actor_theta, nA, nA))
+        
+        critic = NN(state_dim, nA, layers=[nA])
+        critic_theta = np.random.normal(size=(critic.theta_len,))
+        critic(tf.keras.Input(shape=(state_dim,)))
+        critic.update_params(critic.theta2nnparams(critic_theta, state_dim, nA))
+        
         
         # actor.print_params()
 
         pi = policy.Energy_twin(env, actor, critic, state_dim, nA)
         theta_dim = pi.actor_theta_len + pi.critic_theta_len
-        '''
-        pi = policy.Gaus(env, env_name, state_dim, nA=nA)
+        
+        # pi = policy.Gaus(env, env_name, state_dim, nA=nA)
 
         print("Theta dimension is " + str(theta_dim))
 
@@ -170,10 +175,11 @@ if __name__ == '__main__':
         # print(np.array(list(map(fn, epsilons))))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
-        # theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+        
+        theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, es.AT_gradient_parallel, es.twin_F_arr, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
-        theta0 = np.random.standard_normal(size=theta_dim)
-        theta, accum_rewards = es.gradascent(theta0, pi, outfile, es.AT_gradient_parallel, es.gaus_F_arr, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+        #theta0 = np.random.standard_normal(size=theta_dim)
+        #theta, accum_rewards = es.gradascent(theta0, pi, outfile, es.AT_gradient_parallel, es.gaus_F_arr, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         # actor, accum_rewards = es.nn_gradascent(actor, pi, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
         # nn_test_video(pi, actor, env_name, method)
         res[k] = np.array(accum_rewards)

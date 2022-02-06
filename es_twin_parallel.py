@@ -31,13 +31,18 @@ def F(theta, gamma=1, max_step=1e4):
     state = env.reset()
     state_dim = state.size
 
+
+    actor = NN(state_dim, nA, layers=[2*nA])
+    '''
     b=1
-    actor = NN(nA, layers=[2*nA])
     actor.compile(optimizer=actor.optimizer, loss=actor.loss)
     actor.fit(np.random.standard_normal((b,nA)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
-    critic = NN(nA, layers=[nA])
+    '''
+    critic = NN(state_dim, nA, layers=[nA])
+    '''
     critic.compile(optimizer=critic.optimizer, loss=actor.loss)
     critic.fit(np.random.standard_normal((b,state_dim)), np.random.standard_normal((b,nA)), epochs=1, batch_size=b, verbose=0)
+    '''
     actor_theta_len = actor.nnparams2theta().size
 
     steps_count=0

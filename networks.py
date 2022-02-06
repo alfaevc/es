@@ -4,7 +4,7 @@ import numpy as np
 
 class NN(tf.keras.Model):
     
-  def __init__(self, output_size, layers=[32,16,8], actor_lr=1e-4):
+  def __init__(self, input_size, output_size, layers=[32,16,8], actor_lr=1e-4):
     super().__init__()
     initializer = tf.keras.initializers.VarianceScaling(scale=1.0, mode="fan_avg", distribution="normal", seed=None)
 
@@ -18,7 +18,10 @@ class NN(tf.keras.Model):
 
     self.optimizer = tf.keras.optimizers.Adam(learning_rate=actor_lr)
     self.loss = tf.keras.losses.MeanSquaredError()
+    self.input_dim = input_size
     self.output_dim = output_size
+
+    self.theta_len = self.calc_theta_len(self.input_dim, self.output_dim)
 
 
   def call(self, inputs):
@@ -35,6 +38,17 @@ class NN(tf.keras.Model):
     theta = np.concatenate(tuple(theta))
     return theta
   
+  def calc_theta_len(self, input_dim, output_dim):
+    end_index = input_dim * self.ls[0]
+    
+    for i in range(len(self.ls)-1):
+      end_index += self.ls[i] + self.ls[i] * self.ls[i+1]
+    
+    end_index += self.ls[-1] + self.ls[-1] * output_dim
+
+    return end_index + output_dim
+    
+
   def theta2nnparams(self, theta, input_dim, output_dim):
     params = []
     # self.print_params()
