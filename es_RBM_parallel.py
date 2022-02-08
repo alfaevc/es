@@ -178,7 +178,7 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
     theta_dim = (state_dim + 2) * nA
-    outfile = "RBM_{}.txt".format(env_name+str(time.time()))
+    outfile = "files/RBM_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
     b = 1
