@@ -102,10 +102,10 @@ def RBM_action(b, a_mean, a_std, state, nA, K=10):
     a_std = a_std_scaled[0]
 
     actions = np.random.normal(loc=a_mean,scale=a_std,size=(K*nA,nA))
+    actions = np.maximum(np.minimum(actions,np.ones(actions.shape)),-np.ones(actions.shape))
     fn = lambda a: sum(0.5*np.divide((a-a_mean)*(a-a_mean),a_std*a_std)-np.divide((a_mean-b)*a,a_std))
     energies = np.array(list(map(fn, actions)))
     #print('actions: ',actions.shape,'energies: ',energies.shape)
-    actions = np.maximum(np.minimum(actions,np.ones(actions.shape)),-np.ones(actions.shape))
     return actions[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
