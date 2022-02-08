@@ -162,9 +162,9 @@ def eval(theta):
 
 ##########################################################################
 global env_name
-env_name = 'InvertedPendulumBulletEnv-v0'
+# env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
+env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -172,7 +172,7 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=0#if parallelize
+    useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     env = gym.make(env_name)
     state_dim = env.reset().size
@@ -194,7 +194,7 @@ if __name__ == '__main__':
         time_elapsed = int(round(time.time()-t_start))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1.0, eta=1e-2, max_epoch=max_epoch, N=N)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 
