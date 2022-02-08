@@ -10,7 +10,7 @@ import math
 import multiprocessing as mp
 from itertools import repeat
 import tensorflow as tf
-# from itertools import product
+from itertools import product
 
 """fitness functions for parallel
 """
@@ -90,7 +90,8 @@ def gaus_eval(theta, env_name):
     return G
 
 def energy_actions(actor, critic, state, nA, K=10):
-    sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,nA))
+    sample_actions = np.array(list(product([-1,0,1], repeat=nA*K)))
+    # sample_actions = np.random.uniform(low=-1.0, high=1.0, size=(K,nA))
     latent_actions, latent_states = actor(sample_actions).numpy(), np.tile(critic(np.expand_dims(state,0)).numpy().reshape(-1), (K,1))
     energies = np.einsum('ij,ij->i', latent_actions, latent_states)
     return sample_actions[np.argmin(energies)]
@@ -212,7 +213,7 @@ def FD_gradient(theta, policy, sigma=1, N=100):
     fn = lambda x: (policy.F(theta + sigma * x) - G) * x
     return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma
 
-def AT_gradient(theta, policy, sigma=1, N=100):
+def AT_gradient(theta, policy, env_name, sigma=1, N=100):
     #epsilons = np.random.standard_normal(size=(N, theta.size))
     epsilons=orthogonal_epsilons(N,theta.size)
     fn = lambda x: (policy.F(theta + sigma * x) - policy.F(theta - sigma * x)) * x
@@ -287,9 +288,9 @@ def gradascent(theta0, policy, filename, grad, F, sigma=1, eta=1e-3, max_epoch=2
         print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))    
         with open(filename, "a") as f:
           f.write("%.d %.2f \n" % (i, accum_rewards[i]))
-      
 
       theta += eta * grad(theta, F, policy.env_name, sigma, N=N)
+      # theta += eta * grad(theta, policy, policy.env_name, sigma, N=N)
 
     return theta, accum_rewards
 
