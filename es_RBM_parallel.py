@@ -76,22 +76,8 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
   return theta, accum_rewards
 
-##def RBM_action(b, a_mean, a_std, state, nA, K=10):
-##    actions = np.random.uniform(low=-1.0,high=1.0,size=(K*nA,nA))
-##    #scale the std
-##    min_logvar=1
-##    max_logvar=3
-##    raw_vs = a_std.reshape(1,-1)
-##    logvars = max_logvar - tf.nn.softplus(max_logvar - raw_vs)
-##    logvars = min_logvar + tf.nn.softplus(logvars - min_logvar)
-##    a_std_scaled = tf.exp(logvars-3).numpy()
-##    a_std = a_std_scaled[0]
-##
-##    fn = lambda a: sum(0.5*np.divide((a-a_mean)*(a-a_mean),a_std*a_std)-np.divide((a_mean-b)*a,a_std))
-##    energies = np.array(list(map(fn, actions)))
-##    return actions[np.argmin(energies)]
-
 def RBM_action(b, a_mean, a_std, state, nA, K=10):
+##    actions = np.random.uniform(low=-1.0,high=1.0,size=(K*nA,nA))
     #scale the std
     min_logvar=1
     max_logvar=3
@@ -101,12 +87,19 @@ def RBM_action(b, a_mean, a_std, state, nA, K=10):
     a_std_scaled = tf.exp(logvars-3).numpy()
     a_std = a_std_scaled[0]
 
-    actions = np.random.normal(loc=a_mean,scale=a_std,size=(K*nA,nA))
-    actions = np.maximum(np.minimum(actions,np.ones(actions.shape)),-np.ones(actions.shape))
-    fn = lambda a: sum(0.5*np.divide((a-a_mean)*(a-a_mean),a_std*a_std)-np.divide((a_mean-b)*a,a_std))
-    energies = np.array(list(map(fn, actions)))
+    #sample according to pdf
+    #actions = np.random.normal(loc=a_mean,scale=a_std,size=(K*nA,nA))
+    #actions = np.maximum(np.minimum(actions,np.ones(actions.shape)),-np.ones(actions.shape))
+    #fn = lambda a: sum(0.5*np.divide((a-a_mean)*(a-a_mean),a_std*a_std)-np.divide((a_mean-b)*a,a_std))
+    #energies = np.array(list(map(fn, actions)))
     #print('actions: ',actions.shape,'energies: ',energies.shape)
-    return actions[np.argmin(energies)]
+    #return actions[np.argmin(energies)]
+    
+    #exactly solve the optimal action
+    action = a_std*(a_mean-b)+a_mean#close form solution
+    action = np.maximum(np.minimum(action,np.ones(action.shape)),-np.ones(action.shape))#projection
+    return action
+    
 
 def F(theta , gamma=1, max_step=5e3):
     env = gym.make(env_name)#this takes no time
@@ -169,9 +162,9 @@ def eval(theta):
 
 ##########################################################################
 global env_name
-# env_name = 'InvertedPendulumBulletEnv-v0'
+env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-env_name = 'HalfCheetah-v2'
+# env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -179,7 +172,7 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=1#if parallelize
+    useParallel=0#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     env = gym.make(env_name)
     state_dim = env.reset().size
@@ -201,7 +194,7 @@ if __name__ == '__main__':
         time_elapsed = int(round(time.time()-t_start))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1.0, eta=1e-2, max_epoch=max_epoch, N=N)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 
