@@ -87,27 +87,27 @@ def get_output(output):
     logvars = min_logvar + tf.nn.softplus(logvars - min_logvar)
     return means, tf.exp(logvars).numpy()
 
-def energy_action(nA,table, latent_state,all_actions):
+def energy_action(nA, table, latent_state, all_actions):
     max_depth = 2*nA
     left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
     currentDepth = 0
-    while currentDpeth < max_depth:
+    while currentDepth < max_depth:
         #go to next level of depth
         mid = (left+right)/2#not an integer
         left_latent_action_sum = np.average(table[left:math.floor(mid)],axis=0)
         left_prob = np.exp(left_latent_action_sum@latent_state)#make cause overflow or underflow. need some normalization
         
-        left_latent_action_sum = np.average(table[left:math.ceiling(mid)],axis=0)
-        left_prob = np.exp(right_latent_action_sum@latent_state)
+        right_latent_action_sum = np.average(table[right:math.ceiling(mid)],axis=0)
+        right_prob = np.exp(right_latent_action_sum@latent_state)
         
         p = left_prob/(left_prob+right_prob)
-        coin_toss = random.binomial(1, left_prob)
-        if coin_toss ==1:#go left
+        coin_toss = np.random.binomial(1, p)
+        if coin_toss == 1:#go left
             right=math.floor(mid)
         else:#go right
             left = math.ceiling(mid)
-        current_depth+=1
-    return action = all_actions[left]
+        currentDepth+=1
+    return all_actions[left]
 
 def get_latent_action(action, theta):
     return action
@@ -128,14 +128,13 @@ def F(theta , gamma=1, max_step=5e3):
     steps_count=0#cannot use global var here because subprocesses do not have access to global var
     #preprocessing
     all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
-    table = np.zeros((all_actions.shape))
-    for i in range(all_actions):#need to vectorize
-        table[i] = get_latent_action(action, theta)
-    for i in range(all_actions-1):#need to make more efficient
-        table[i+1]+=table[i]
+
+    fn = lambda a: get_latent_action(a, theta)
+    table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
+   
     while not done:
         latent_state = get_latent_state(state,theta)
-        action = energy_action(nA, table, latent_state,all_actions)
+        action = energy_action(nA, table, latent_state, all_actions)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
