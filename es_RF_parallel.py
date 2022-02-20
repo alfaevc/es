@@ -94,11 +94,11 @@ def energy_action(nA,table, latent_state,all_actions):
     while currentDpeth < max_depth:
         #go to next level of depth
         mid = (left+right)/2#not an integer
-        left_latent_action_sum = np.average(table[left:math.floor(mid)],axis=0)
+        left_latent_action_sum = table[math.floor(mid)] - table[left]
         left_prob = np.exp(left_latent_action_sum@latent_state)#make cause overflow or underflow. need some normalization
         
-        left_latent_action_sum = np.average(table[left:math.ceiling(mid)],axis=0)
-        left_prob = np.exp(right_latent_action_sum@latent_state)
+        right_latent_action_sum = table[right]-table[math.ceiling(mid)]
+        right_prob = np.exp(right_latent_action_sum@latent_state)
         
         p = left_prob/(left_prob+right_prob)
         coin_toss = random.binomial(1, left_prob)
