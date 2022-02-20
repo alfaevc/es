@@ -87,7 +87,7 @@ def get_output(output):
     logvars = min_logvar + tf.nn.softplus(logvars - min_logvar)
     return means, tf.exp(logvars).numpy()
 
-def energy_action(nA,table, latent_state,all_actions):
+def energy_action(nA,table, latent_state, all_actions):
     max_depth = 2*nA
     left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
     currentDepth = 0
@@ -95,14 +95,14 @@ def energy_action(nA,table, latent_state,all_actions):
         #go to next level of depth
         mid = (left+right)/2#not an integer
         left_latent_action_sum = table[math.floor(mid)] - table[left]
-        left_prob = np.exp(left_latent_action_sum@latent_state)#make cause overflow or underflow. need some normalization
-        
+        left_prob = np.exp(np.tanh(left_latent_action_sum@latent_state))#may cause overflow or underflow. need some normalization
         right_latent_action_sum = table[right]-table[math.ceil(mid)]
-        right_prob = np.exp(right_latent_action_sum@latent_state)
+        right_prob = np.exp(np.tanh(right_latent_action_sum@latent_state))
+
         p = left_prob/(left_prob+right_prob)
         #print('depth: ',currentDepth,'p: ',p,'left: ',left,'right: ',right)
         coin_toss = np.random.binomial(1, p)
-        if coin_toss ==1:#go left
+        if coin_toss == 1:#go left
             right=math.floor(mid)
         else:#go right
             left = math.ceil(mid)
@@ -118,7 +118,7 @@ def get_latent_state(nA, state, theta):
     latent_state = state@theta[nA**2:].reshape((state_dim,nA))
     return latent_state
 
-def F(theta , gamma=1, max_step=5e3):
+def F(theta, gamma=1, max_step=5e3):
     gym.logger.set_level(40)
     env = gym.make(env_name)#this takes no time
     nA, = env.action_space.shape
@@ -130,7 +130,7 @@ def F(theta , gamma=1, max_step=5e3):
     state_dim = state.size
     steps_count=0#cannot use global var here because subprocesses do not have access to global var
     #preprocessing
-    all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
+    # all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
     fn = lambda a: get_latent_action(nA, a, theta)
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
 ##    table = np.zeros((all_actions.shape))
@@ -140,7 +140,7 @@ def F(theta , gamma=1, max_step=5e3):
 ##        table[i+1]+=table[i]
     while not done:
         latent_state = get_latent_state(nA,state,theta)
-        action = energy_action(nA, table, latent_state,all_actions)
+        action = energy_action(nA, table, latent_state, all_actions)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
@@ -157,7 +157,7 @@ def F_arr(epsilons, sigma, theta):
         grad[i] = (output1 - output2) * epsilons[i]
         steps_count += time1+time2
     grad = np.average(grad,axis=0)/sigma/2
-    return [grad,steps_count]
+    return [grad, steps_count]
         
     #fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
     #return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
@@ -173,7 +173,7 @@ def eval(theta):
     state_dim = state.size
     global time_step_count
     #preprocessing
-    all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
+    # all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
     fn = lambda a: get_latent_action(nA, a, theta)
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
 ##    table = np.zeros((all_actions.shape))
@@ -192,9 +192,9 @@ def eval(theta):
 
 ##########################################################################
 global env_name
-env_name = 'InvertedPendulumBulletEnv-v0'
+# env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
+env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -207,9 +207,10 @@ if __name__ == '__main__':
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
+    all_actions = np.array([i for i in product([-1,-2/3,-1/3,0,1/3,2/3,1],repeat=nA)])
     theta_dim=nA*(state_dim+nA)
     #theta_dim = (state_dim + 1) * 2 * nA #gaus
-    outfile = "RF_{}.txt".format(env_name+str(time.time()))
+    outfile = "files/RF_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
     b = 1

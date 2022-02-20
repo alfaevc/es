@@ -158,7 +158,7 @@ def rf_energy_action(nA, table, latent_state, all_actions):
         #go to next level of depth
         mid = (left+right)/2#not an integer
         left_latent_action_sum = table[math.floor(mid)] - table[left]
-        left_prob = np.exp(left_latent_action_sum@latent_state)#make cause overflow or underflow. need some normalization
+        left_prob = np.exp(left_latent_action_sum@latent_state) #make cause overflow or underflow. need some normalization
         
         right_latent_action_sum = table[right] - table[math.ceiling(mid)]
         right_prob = np.exp(right_latent_action_sum@latent_state)
@@ -190,7 +190,7 @@ def rfF(theta, env_name, gamma=1, max_step=5e3):
     state_dim = state.size
     steps_count=0#cannot use global var here because subprocesses do not have access to global var
     #preprocessing
-    all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
+    all_actions = np.array([i for i in product([-1,-1/3, 0, 1/3,1],repeat=nA)])#need to make the number of actions some power of 2
     
     fn = lambda a: get_latent_action(a, theta)
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
