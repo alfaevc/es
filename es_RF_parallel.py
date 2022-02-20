@@ -87,27 +87,27 @@ def get_output(output):
     logvars = min_logvar + tf.nn.softplus(logvars - min_logvar)
     return means, tf.exp(logvars).numpy()
 
-def energy_action(nA,table, latent_state,all_actions):
+def energy_action(nA, table, latent_state, all_actions):
     max_depth = 2*nA
     left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
     currentDepth = 0
-    while currentDpeth < max_depth:
+    while currentDepth < max_depth:
         #go to next level of depth
         mid = (left+right)/2#not an integer
         left_latent_action_sum = table[math.floor(mid)] - table[left]
         left_prob = np.exp(left_latent_action_sum@latent_state)#make cause overflow or underflow. need some normalization
         
-        right_latent_action_sum = table[right]-table[math.ceiling(mid)]
+        right_latent_action_sum = table[right] - table[math.ceiling(mid)]
         right_prob = np.exp(right_latent_action_sum@latent_state)
         
         p = left_prob/(left_prob+right_prob)
-        coin_toss = random.binomial(1, left_prob)
-        if coin_toss ==1:#go left
+        coin_toss = np.random.binomial(1, p)
+        if coin_toss == 1:#go left
             right=math.floor(mid)
         else:#go right
             left = math.ceiling(mid)
-        current_depth+=1
-    return action = all_actions[left]
+        currentDepth+=1
+    return all_actions[left]
 
 def get_latent_action(action, theta):
     return action
@@ -115,7 +115,7 @@ def get_latent_action(action, theta):
 def get_latent_state(state, theta):
     return state
 
-def F(theta , gamma=1, max_step=5e3):
+def F(theta, gamma=1, max_step=5e3):
     gym.logger.set_level(40)
     env = gym.make(env_name)#this takes no time
     nA, = env.action_space.shape
@@ -128,19 +128,18 @@ def F(theta , gamma=1, max_step=5e3):
     steps_count=0#cannot use global var here because subprocesses do not have access to global var
     #preprocessing
     all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
-    table = np.zeros((all_actions.shape))
-    for i in range(all_actions):#need to vectorize
-        table[i] = get_latent_action(action, theta)
-    for i in range(all_actions-1):#need to make more efficient
-        table[i+1]+=table[i]
+    
+    fn = lambda a: get_latent_action(a, theta)
+    table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
+
     while not done:
         latent_state = get_latent_state(state,theta)
-        action = energy_action(nA, table, latent_state,all_actions)
+        action = energy_action(nA, table, latent_state, all_actions)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
         discount *= gamma
-    return G,steps_count
+    return G, steps_count
 
 def F_arr(epsilons, sigma, theta):
     grad = np.zeros(epsilons.shape)
@@ -168,7 +167,7 @@ def eval(theta):
     state_dim = state.size
     global time_step_count
     while not done:
-        action = energy_action(theta, state,nA, K=nA*10)
+        action = energy_action(theta, state, nA, K=nA*10)
         state, reward, done, _ = env.step(action)
         time_step_count+=1
         G += reward
@@ -194,7 +193,7 @@ if __name__ == '__main__':
     nA, = env.action_space.shape
     theta_dim=round((state_dim+nA)*(1+(state_dim+nA+1)/2))#num of polynomial terms up to degree 
     #theta_dim = (state_dim + 1) * 2 * nA #gaus
-    outfile = "polyn_{}.txt".format(env_name+str(time.time()))
+    outfile = "files/fourier_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
     b = 1

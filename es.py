@@ -136,6 +136,86 @@ def twin_F(theta, env_name, gamma=1, max_step=1e4):
         steps_count+=1
     return G, steps_count
 
+def twin_F_arr(epsilons, sigma, theta, env_name):
+    grad = np.zeros(epsilons.shape)
+    steps_count = 0
+    for i in range(epsilons.shape[0]):
+        #can be made more efficient. but would not improve runtime, since only loop <=8 times
+        output1, time1 = twin_F(theta + sigma * epsilons[i], env_name)
+        output2, time2 = twin_F(theta - sigma * epsilons[i], env_name)
+        grad[i] = (output1 - output2) * epsilons[i]
+        steps_count += time1+time2
+    grad = np.average(grad,axis=0)/sigma/2
+    #fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
+    #return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
+    return [grad,steps_count]
+
+def rf_energy_action(nA, table, latent_state, all_actions):
+    max_depth = 2*nA
+    left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
+    currentDepth = 0
+    while currentDepth < max_depth:
+        #go to next level of depth
+        mid = (left+right)/2#not an integer
+        left_latent_action_sum = table[math.floor(mid)] - table[left]
+        left_prob = np.exp(left_latent_action_sum@latent_state)#make cause overflow or underflow. need some normalization
+        
+        right_latent_action_sum = table[right] - table[math.ceiling(mid)]
+        right_prob = np.exp(right_latent_action_sum@latent_state)
+        
+        p = left_prob/(left_prob+right_prob)
+        coin_toss = np.random.binomial(1, p)
+        if coin_toss == 1:#go left
+            right=math.floor(mid)
+        else:#go right
+            left = math.ceiling(mid)
+        currentDepth+=1
+    return all_actions[left]
+
+def get_latent_action(action, theta):
+    return action
+
+def get_latent_state(state, theta):
+    return state
+
+def rfF(theta, env_name, gamma=1, max_step=5e3):
+    gym.logger.set_level(40)
+    env = gym.make(env_name)#this takes no time
+    nA, = env.action_space.shape
+    G = 0.0
+    done = False
+    discount = 1
+    state = env.reset()
+    a_dim = np.arange(nA)
+    state_dim = state.size
+    steps_count=0#cannot use global var here because subprocesses do not have access to global var
+    #preprocessing
+    all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
+    
+    fn = lambda a: get_latent_action(a, theta)
+    table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
+
+    while not done:
+        latent_state = get_latent_state(state, theta)
+        action = rf_energy_action(nA, table, latent_state, all_actions)
+        state, reward, done, _ = env.step(action)
+        steps_count+=1
+        G += reward * discount
+        discount *= gamma
+    return G, steps_count
+
+def rfF_arr(epsilons, sigma, theta):
+    grad = np.zeros(epsilons.shape)
+    steps_count = 0
+    for i in range(epsilons.shape[0]):
+        #can be made more efficient. but would not improve runtime, since only loop <=8 times
+        output1, time1 = rfF(theta + sigma * epsilons[i])
+        output2, time2 = rfF(theta - sigma * epsilons[i])
+        grad[i] = (output1 - output2) * epsilons[i]
+        steps_count += time1+time2
+    grad = np.average(grad,axis=0)/sigma/2
+    return [grad,steps_count]
+
 def twin_eval(theta, env_name):
     env = gym.make(env_name)
     nA, = env.action_space.shape
@@ -155,26 +235,20 @@ def twin_eval(theta, env_name):
     done = False
     actor.update_params(actor.theta2nnparams(theta[:actor_theta_len], nA, nA))
     critic.update_params(critic.theta2nnparams(theta[actor_theta_len:], state_dim, nA))
+    
+    all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
+    
+    fn = lambda a: get_latent_action(a, theta)
+    table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
+    
     while not done:
-        action = energy_actions(actor, critic, state, nA, K=nA*10)
-        #action = energy_min_action(actor, critic, state)
+        # action = energy_actions(actor, critic, state, nA, K=nA*10)
+        # action = energy_min_action(actor, critic, state)
+        latent_state = get_latent_state(state, theta)
+        action = rf_energy_action(nA, table, latent_state, all_actions)
         state, reward, done, _ = env.step(action)
         G += reward
     return G
-
-def twin_F_arr(epsilons, sigma, theta, env_name):
-    grad = np.zeros(epsilons.shape)
-    steps_count = 0
-    for i in range(epsilons.shape[0]):
-        #can be made more efficient. but would not improve runtime, since only loop <=8 times
-        output1, time1 = twin_F(theta + sigma * epsilons[i], env_name)
-        output2, time2 = twin_F(theta - sigma * epsilons[i], env_name)
-        grad[i] = (output1 - output2) * epsilons[i]
-        steps_count += time1+time2
-    grad = np.average(grad,axis=0)/sigma/2
-    #fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
-    #return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
-    return [grad,steps_count]
 
 """### AT vs FD
 """
@@ -320,8 +394,8 @@ def nn_twin_gradascent(actor, critic, policy, filename, grad, F, sigma=1, eta=1e
     theta = np.concatenate((actor.nnparams2theta(), critic.nnparams2theta()))
     # print(theta.size)
     for i in range(max_epoch):
-      # theta += eta * grad(theta, policy, sigma, N=N)
-      theta += eta * grad(theta, F, sigma, N=N)
+      theta += eta * grad(theta, policy, sigma, N=N)
+      # theta += eta * grad(theta, F, sigma, N=N)
       if i%1==0:
         theta_action = theta[:policy.actor_theta_len]
         theta_state = theta[policy.actor_theta_len:]

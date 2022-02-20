@@ -177,7 +177,7 @@ if __name__ == '__main__':
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
         
-        theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, es.AT_gradient_parallel, es.twin_F_arr, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
+        theta, accum_rewards = es.nn_twin_gradascent(actor, critic, pi, outfile, es.AT_gradient, es.rfF_arr, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta, accum_rewards, method = es.gradascent_autoSwitch(theta0, pi, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         # theta0 = np.random.standard_normal(size=theta_dim)
         # theta, accum_rewards = es.gradascent(theta0, pi, outfile, es.AT_gradient_parallel, es.gaus_F_arr, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
