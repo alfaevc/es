@@ -202,7 +202,7 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=0#if parallelize
+    useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     env = gym.make(env_name)
     state_dim = env.reset().size
@@ -215,7 +215,7 @@ if __name__ == '__main__':
         f.write("")
     b = 1
     num_seeds = 1
-    max_epoch = 501
+    max_epoch = 1001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 
