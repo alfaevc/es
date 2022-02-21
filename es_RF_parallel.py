@@ -215,7 +215,8 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
 
-    all_actions = np.array([i for i in product([-1,-5/7, -3/7,-1/7,0,3/7,5/7,1],repeat=nA)])#need to make the number of actions some power of 2
+    all_actions = np.random.uniform(low=-1,high=1,size=(2**(3*nA),nA))
+    #all_actions = np.array([i for i in product([-1,-5/7, -3/7,-1/7,0,3/7,5/7,1],repeat=nA)])#need to make the number of actions some power of 2
 
     theta_dim=nA*(state_dim+nA)
     #theta_dim = (state_dim + 1) * 2 * nA #gaus
