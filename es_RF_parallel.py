@@ -134,6 +134,7 @@ def F(theta, gamma=1, max_step=5e3):
     steps_count=0#cannot use global var here because subprocesses do not have access to global var
     #preprocessing
     # all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
+    all_actions = np.array([i for i in product([-1,-5/7, -3/7,-1/7,0,3/7,5/7,1],repeat=nA)])#num of actions must be some power of 2
     fn = lambda a: get_latent_action(nA, a, theta)
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
 ##    table = np.zeros((all_actions.shape))
