@@ -91,13 +91,16 @@ def energy_action(nA,table, latent_state, all_actions):
     max_depth = 2*nA
     left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
     currentDepth = 0
+    multiplier=3
     while currentDepth < max_depth:
         #go to next level of depth
         mid = (left+right)/2#not an integer
-        left_latent_action_sum = table[math.floor(mid)] - table[left]
-        left_prob = np.exp(np.tanh(left_latent_action_sum@latent_state))#may cause overflow or underflow. need some normalization
-        right_latent_action_sum = table[right]-table[math.ceil(mid)]
-        right_prob = np.exp(np.tanh(right_latent_action_sum@latent_state))
+        left_latent_action_sum = table[math.ceil(mid)]
+        if left>0:
+            left_latent_action_sum = table[math.ceil(mid)] - table[left-1]
+        left_prob = np.exp(multiplier*np.tanh(left_latent_action_sum@latent_state))#may cause overflow or underflow. need some normalization
+        right_latent_action_sum = table[right]-table[math.floor(mid)]
+        right_prob = np.exp(multiplier*np.tanh(right_latent_action_sum@latent_state))
 
         p = left_prob/(left_prob+right_prob)
         #print('depth: ',currentDepth,'p: ',p,'left: ',left,'right: ',right)
