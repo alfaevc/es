@@ -92,15 +92,26 @@ def energy_action(nA,table, latent_state, all_actions):
     left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
     currentDepth = 0
     multiplier=3
+    
+    # norm_latent_state = latent_state/(np.abs(latent_state).max()+1)
+
     while currentDepth < max_depth:
         #go to next level of depth
         mid = (left+right)/2#not an integer
         left_latent_action_sum = table[math.ceil(mid)]
         if left>0:
-            left_latent_action_sum = table[math.ceil(mid)] - table[left-1]
-        left_prob = np.exp(multiplier*np.tanh(left_latent_action_sum@latent_state))#may cause overflow or underflow. need some normalization
+            left_latent_action_sum -= table[left-1]
+        
+        #left_prob = np.exp(multiplier*np.tanh(left_latent_action_sum@latent_state))#may cause overflow or underflow. need some normalization
         right_latent_action_sum = table[right]-table[math.floor(mid)]
-        right_prob = np.exp(multiplier*np.tanh(right_latent_action_sum@latent_state))
+        #right_prob = np.exp(multiplier*np.tanh(right_latent_action_sum@latent_state))
+        
+
+        latent_action_norm = np.max(np.abs(left_latent_action_sum)) + np.max(np.abs(right_latent_action_sum)) + 1
+        
+        left_prob = np.exp((left_latent_action_sum/latent_action_norm)@latent_state)
+        right_prob = np.exp((right_latent_action_sum/latent_action_norm)@latent_state)
+
 
         p = left_prob/(left_prob+right_prob)
         #print('depth: ',currentDepth,'p: ',p,'left: ',left,'right: ',right)
@@ -117,9 +128,8 @@ def get_latent_action(nA, action, theta):
     return latent_action
 
 def get_latent_state(nA, state, theta):
-    state_dim=len(state)
-    latent_state = state@theta[nA**2:].reshape((state_dim,nA))
-    return latent_state
+    latent_state = (state/(np.abs(state).max()+1))@theta[nA**2:].reshape((state_dim,nA))
+    return latent_state/(np.abs(latent_state).max()+1)
 
 def F(theta, gamma=1, max_step=5e3):
     gym.logger.set_level(40)
@@ -134,7 +144,7 @@ def F(theta, gamma=1, max_step=5e3):
     steps_count=0#cannot use global var here because subprocesses do not have access to global var
     #preprocessing
     # all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
-    all_actions = np.array([i for i in product([-1,-5/7, -3/7,-1/7,0,3/7,5/7,1],repeat=nA)])#num of actions must be some power of 2
+    #num of actions must be some power of 2
     fn = lambda a: get_latent_action(nA, a, theta)
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
 ##    table = np.zeros((all_actions.shape))
@@ -143,11 +153,11 @@ def F(theta, gamma=1, max_step=5e3):
 ##    for i in range(all_actions-1):#need to make more efficient
 ##        table[i+1]+=table[i]
     while not done:
-        latent_state = get_latent_state(nA,state,theta)
+        latent_state = get_latent_state(nA, state, theta)
         action = energy_action(nA, table, latent_state, all_actions)
         state, reward, done, _ = env.step(action)
         steps_count+=1
-        G += reward * discount
+        G += reward*discount
         discount *= gamma
     return G,steps_count
 
@@ -196,9 +206,9 @@ def eval(theta):
 
 ##########################################################################
 global env_name
-# env_name = 'InvertedPendulumBulletEnv-v0'
+env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-env_name = 'HalfCheetah-v2'
+# env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -211,10 +221,11 @@ if __name__ == '__main__':
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
-    all_actions = np.array([i for i in product([-1,-2/3,-1/3,0,1/3,2/3,1],repeat=nA)])
+    all_actions = np.array([i for i in product([-1,-2/3,-1/3,0,1/3,1/2,2/3,1],repeat=nA)])
     theta_dim=nA*(state_dim+nA)
     #theta_dim = (state_dim + 1) * 2 * nA #gaus
-    outfile = "files/RF_{}.txt".format(env_name+str(time.time()))
+    # outfile = "files/RF_{}.txt".format(env_name+str(time.time()))
+    outfile = "files/RF_{}.txt".format(env_name)
     with open(outfile, "w") as f:
         f.write("")
     b = 1
