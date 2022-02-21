@@ -32,6 +32,7 @@ def AT_gradient_parallel(useParallel, theta, sigma=1, N=100):
     global steps_list
     steps_list = []
     global time_step_count
+   
     if useParallel==1:
         for i in range(numCPU):
             pool.apply_async(F_arr,args = (epsilons[i*jobs:(i+1)*jobs], sigma, theta),callback=collect_result)
@@ -87,29 +88,38 @@ def get_output(output):
     logvars = min_logvar + tf.nn.softplus(logvars - min_logvar)
     return means, tf.exp(logvars).numpy()
 
-def energy_action(nA,table, latent_state, all_actions):
-    max_depth = 2*nA
+def energy_action(nA,table, latent_state,all_actions):
+    max_depth = nA*round(math.log(all_actions.shape[0],2))
     left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
     currentDepth = 0
-    multiplier=3
+    multiplier = 3
     while currentDepth < max_depth:
         #go to next level of depth
         mid = (left+right)/2#not an integer
         left_latent_action_sum = table[math.ceil(mid)]
         if left>0:
-            left_latent_action_sum = table[math.ceil(mid)] - table[left-1]
-        left_prob = np.exp(multiplier*np.tanh(left_latent_action_sum@latent_state))#may cause overflow or underflow. need some normalization
+            left_latent_action_sum = table[math.ceil(mid)] - table[left-1]       
         right_latent_action_sum = table[right]-table[math.floor(mid)]
-        right_prob = np.exp(multiplier*np.tanh(right_latent_action_sum@latent_state))
 
+        normalizing_constant = (0.1+max(abs(left_latent_action_sum@latent_state),
+                                      abs(right_latent_action_sum@latent_state)))/multiplier#test with and w/out multiplier
+        
+        left_prob = np.exp(left_latent_action_sum@latent_state/normalizing_constant)
+        right_prob = np.exp(right_latent_action_sum@latent_state/normalizing_constant)
+        
+        #left_prob = np.exp(multiplier*np.tanh(left_latent_action_sum@latent_state))
+        #right_prob = np.exp(multiplier*np.tanh(right_latent_action_sum@latent_state))
+        
         p = left_prob/(left_prob+right_prob)
-        #print('depth: ',currentDepth,'p: ',p,'left: ',left,'right: ',right)
+        if p>1 or math.isnan(p)==True:
+            print('p: ',p,'left prob: ',left_prob,'right prob: ',right_prob)
         coin_toss = np.random.binomial(1, p)
-        if coin_toss == 1:#go left
+        if coin_toss ==1:#go left
             right=math.floor(mid)
         else:#go right
             left = math.ceil(mid)
         currentDepth+=1
+        #print('depth: ',currentDepth,'left: ',left,'right: ',right,'p ',p)
     return all_actions[left]
 
 def get_latent_action(nA, action, theta):
@@ -121,7 +131,7 @@ def get_latent_state(nA, state, theta):
     latent_state = state@theta[nA**2:].reshape((state_dim,nA))
     return latent_state
 
-def F(theta, gamma=1, max_step=5e3):
+def F(theta , gamma=1, max_step=5e3):
     gym.logger.set_level(40)
     env = gym.make(env_name)#this takes no time
     nA, = env.action_space.shape
@@ -131,11 +141,10 @@ def F(theta, gamma=1, max_step=5e3):
     state = env.reset()
     a_dim = np.arange(nA)
     state_dim = state.size
-    steps_count=0#cannot use global var here because subprocesses do not have access to global var
+    steps_count=0#cannot use global var here because subprocesses cannot edit global var
     #preprocessing
-    # all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
     all_actions = np.array([i for i in product([-1,-5/7, -3/7,-1/7,0,3/7,5/7,1],repeat=nA)])#num of actions must be some power of 2
-    fn = lambda a: get_latent_action(nA, a, theta)
+    fn = lambda a: get_latent_action(nA, a, theta)#must compute the table here, since each subprocess receives a different theta
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
 ##    table = np.zeros((all_actions.shape))
 ##    for i in range(all_actions):#need to vectorize
@@ -144,7 +153,7 @@ def F(theta, gamma=1, max_step=5e3):
 ##        table[i+1]+=table[i]
     while not done:
         latent_state = get_latent_state(nA,state,theta)
-        action = energy_action(nA, table, latent_state, all_actions)
+        action = energy_action(nA, table, latent_state,all_actions)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
@@ -161,7 +170,7 @@ def F_arr(epsilons, sigma, theta):
         grad[i] = (output1 - output2) * epsilons[i]
         steps_count += time1+time2
     grad = np.average(grad,axis=0)/sigma/2
-    return [grad, steps_count]
+    return [grad,steps_count]
         
     #fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
     #return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
@@ -177,14 +186,10 @@ def eval(theta):
     state_dim = state.size
     global time_step_count
     #preprocessing
-    # all_actions = np.array([i for i in product([-1,-1/3,1/3,1],repeat=nA)])#need to make the number of actions some power of 2
+    all_actions = np.array([i for i in product([-1,-5/7, -3/7,-1/7,0,3/7,5/7,1],repeat=nA)])#need to make the number of actions some power of 2
     fn = lambda a: get_latent_action(nA, a, theta)
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
-##    table = np.zeros((all_actions.shape))
-##    for i in range(all_actions):#need to vectorize
-##        table[i] = get_latent_action(action, theta)
-##    for i in range(all_actions-1):#need to make more efficient
-##        table[i+1]+=table[i]
+
     while not done:
         latent_state = get_latent_state(nA,state,theta)
         action = energy_action(nA, table, latent_state,all_actions)
@@ -196,9 +201,9 @@ def eval(theta):
 
 ##########################################################################
 global env_name
-# env_name = 'InvertedPendulumBulletEnv-v0'
+env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-env_name = 'HalfCheetah-v2'
+# env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -206,20 +211,19 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=1#if parallelize
+    useParallel=0#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
-    all_actions = np.array([i for i in product([-1,-2/3,-1/3,0,1/3,2/3,1],repeat=nA)])
     theta_dim=nA*(state_dim+nA)
     #theta_dim = (state_dim + 1) * 2 * nA #gaus
-    outfile = "files/RF_{}.txt".format(env_name+str(time.time()))
+    outfile = "RF_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
     b = 1
     num_seeds = 1
-    max_epoch = 1001
+    max_epoch = 501
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 
