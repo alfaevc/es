@@ -84,7 +84,7 @@ def get_action_net(theta):
     update_nn_params(action_net,theta[:action_nn_dim])
     return action_net
     
-def get_latent_actions(theta):
+def get_latent_actions(theta,nA):
     action_net = get_action_net(theta)
     return action_feed_forward(action_net,all_actions)
 
@@ -96,7 +96,6 @@ def get_theta_dim():
     return action_nn_dim+state_nn_dim
 
 #############################################################################################################################################
-
 
 def collect_result(result):
     result_list.append(result[0])
@@ -163,78 +162,9 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
   return theta, accum_rewards
 
-def energy_action(nA,table, latent_state,all_actions):
-    max_depth = nA*round(math.log(all_actions.shape[0],2))
-    left,right = 0,len(table)-1#left end and right end of search region. we iteratively refine the search region
-    currentDepth = 0
-    while currentDepth < max_depth:
-        #go to next level of depth
-        mid = (left+right)/2#not an integer
-        left_latent_action_sum = table[math.ceil(mid)]
-        if left>0:
-            left_latent_action_sum = table[math.ceil(mid)] - table[left-1]       
-        right_latent_action_sum = table[right]-table[math.floor(mid)]
-##        #product of energy is better than sum of energy
-##        normalizing_constant = (0.1+max(abs(left_latent_action_sum@latent_state),
-##                                      abs(right_latent_action_sum@latent_state)))/multiplier#test with and w/out multiplier
-##        left_prob = np.exp(left_latent_action_sum@latent_state/normalizing_constant)
-##        right_prob = np.exp(right_latent_action_sum@latent_state/normalizing_constant) #this is product of energy
-
-        left_prob = max(left_latent_action_sum@latent_state,0.001)#positive random feature has some noise, and sometimes could be negative
-        right_prob = max(right_latent_action_sum@latent_state,0.001)
-        multiplier = 5
-        left_prob= left_prob**multiplier
-        right_prob = right_prob**multiplier
-        
-        p = left_prob/(left_prob+right_prob)
-        if p>1 or math.isnan(p)==True:
-            print('p: ',p,'left prob: ',left_prob,'right prob: ',right_prob)
-        coin_toss = np.random.binomial(1, p)
-        if coin_toss ==1:#go left
-            right=math.floor(mid)
-        else:#go right
-            left = math.ceil(mid)
-        currentDepth+=1
-        #print('depth: ',currentDepth,'left: ',left,'right: ',right,'p ',p)
-    return all_actions[left]
-
-def get_table(theta,nA,w_arr):
-    latent_action = get_latent_actions(theta)
-    #normalize latent actions by the largest L1 norm cross actions
-##    largest_L1_norm=100
-##    if nA>1:
-##        L1_norm = np.linalg.norm(latent_action,ord=1,axis=1)
-##        largest_L1_norm = max(L1_norm)
-##    else:
-##        largest_L1_norm = max(np.abs(latent_action))
-##    #print('normalizing factor: ',largest_L1_norm)
-##    latent_action = latent_action/largest_L1_norm
-    latent_action = positive_random_feature_actions(w_arr,latent_action)#transform using positive random feature
-    table = np.cumsum(latent_action,axis=0)
-    return table
-
-def get_latent_state_positive_RF(state,state_net,w_arr):
-    latent_state = state_feed_forward(state_net,state)
-    #normalize latent state by L1 norm. 
-    latent_state = latent_state/sum(np.abs(latent_state))
-    #transform using positive random feature
-    latent_state = positive_random_feature_state(w_arr,latent_state)
-    return latent_state
-
-def positive_random_feature_actions(w_arr,a_arr):
-    #arr: each row is a latent action
-    m=len(w_arr)
-    phi_x_arr = np.exp(a_arr@(w_arr.T))#shape (num_actions,m)
-    normalizer = np.exp(-np.power(np.linalg.norm(a_arr,axis=1),2)/2)/(m**0.5)
-    phi_x_arr = (phi_x_arr.T*normalizer).T
-    return phi_x_arr
-
-def positive_random_feature_state(w_arr,s):
-    #s is latent state
-    m=len(w_arr)
-    phi_y = np.exp(w_arr@s)
-    phi_y = phi_y*np.exp(-s@s/2)/(m**0.5)#shape m
-    return phi_y
+def energy_action(latent_actions, latent_state):
+    energies = latent_actions@latent_state
+    return all_actions[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
     gym.logger.set_level(40)
@@ -248,14 +178,11 @@ def F(theta , gamma=1, max_step=5e3):
     state_dim = state.size
     steps_count=0#cannot use global var here because subprocesses cannot edit global var
     #preprocessing
-    w_arr = np.random.normal(loc=0,scale=1,size=(200,nA))
-    table = get_table(theta,nA,w_arr)
+    latent_actions = get_latent_actions(theta,nA)
     state_net = get_state_net(theta)
-##    fn = lambda a: get_latent_action_nn(nA, a, theta)
-##    table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
     while not done:
-        latent_state = get_latent_state_positive_RF(state,state_net,w_arr)
-        action = energy_action(nA, table, latent_state,all_actions)
+        latent_state = state_feed_forward(state_net,state)
+        action = energy_action(latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
@@ -273,9 +200,6 @@ def F_arr(epsilons, sigma, theta):
         steps_count += time1+time2
     grad = np.average(grad,axis=0)/sigma/2
     return [grad,steps_count]
-        
-    #fn = lambda x: (F(theta + sigma * x) - F(theta - sigma * x)) * x
-    #return np.mean(np.array(list(map(fn, epsilons))), axis=0)/sigma/2
 
 def eval(theta):
     gym.logger.set_level(40)
@@ -287,15 +211,11 @@ def eval(theta):
     a_dim = np.arange(nA)
     state_dim = state.size
     global time_step_count
-    #preprocessing
-    w_arr = np.random.normal(loc=0,scale=1,size=(200,nA))
-    table = get_table(theta,nA,w_arr)
+    latent_actions = get_latent_actions(theta,nA)
     state_net = get_state_net(theta)
-##    fn = lambda a: get_latent_action_nn(nA, a, theta)
-##    table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
     while not done:
-        latent_state = get_latent_state_positive_RF(state,state_net,w_arr)
-        action = energy_action(nA, table, latent_state,all_actions)
+        latent_state = state_feed_forward(state_net,state)
+        action = energy_action(latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         time_step_count+=1
         G += reward
@@ -320,7 +240,7 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
     theta_dim = get_theta_dim()
-    outfile = "positive_RF_{}.txt".format(env_name+str(time.time()))
+    outfile = "twin_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
     b = 1
@@ -329,8 +249,8 @@ if __name__ == '__main__':
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 
-    #all_actions = np.random.uniform(low=-1,high=1,size=(2**(3*nA),nA))
-    all_actions = np.array([i for i in product([-1,-5/7, -3/7,-1/7,0,3/7,5/7,1],repeat=nA)])#num of actions must be some power of 2
+    all_actions = np.random.uniform(low=-1,high=1,size=(10,nA))
+    #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
     
     t_start=time.time()
     for k in tqdm.tqdm(range(num_seeds)):
