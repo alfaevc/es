@@ -12,6 +12,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as torchF
 
+import matplotlib.pyplot as plt
+
 def update_nn_params(input_nn,new_params):
     params = list(input_nn.parameters())
     current_index= 0
@@ -40,17 +42,20 @@ def get_nn_dim(input_nn):
 class state_tower(nn.Module):
     def __init__(self):
         super(state_tower, self).__init__()
-        env = gym.make(env_name)
         state_dim = env.reset().size
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
         self.fc2 = nn.Linear(nA, nA, bias=False)
+        self.fc3 = nn.Linear(nA, nA, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
     #x = torchF.relu(state_net.fc1(x))
     x = state_net.fc1(x)
+    x = torchF.relu(x)
     x = state_net.fc2(x)
+    x = torchF.relu(x)
+    x = state_net.fc3(x)
     latent_state = x.detach().numpy()
     #latent_state = latent_state/sum(np.abs(latent_state)) #normalize
     return latent_state
@@ -58,15 +63,16 @@ def state_feed_forward(state_net,state):#have to separate feed_forward from the 
 class action_tower(nn.Module):
     def __init__(self):
         super(action_tower, self).__init__()
-        env = gym.make(env_name)
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(nA, nA, bias=False)#can automate this. create nn for any given input layer dimensions, instead of fixed dimensions  
         self.fc2 = nn.Linear(nA, nA, bias=False)
+        
 
 def action_feed_forward(action_net,action):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(action)).float()
     #x = torchF.relu(action_net.fc1(x))
     x = action_net.fc1(x)#can automate this. feedforward given nn dimensions
+    x = torchF.relu(x)
     x = action_net.fc2(x)
     latent_action = x.detach().numpy()
     return latent_action
@@ -181,7 +187,7 @@ def F(theta , gamma=1, max_step=5e3):
     action_net = get_action_net(theta)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        actions_arr = np.random.uniform(-1,1,size=(max(10,5**nA),nA))
+        actions_arr = np.random.uniform(-1,1,size=(min(1000,5**nA),nA))
         latent_actions = action_feed_forward(action_net,actions_arr)
         action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
@@ -216,7 +222,7 @@ def eval(theta):
     action_net = get_action_net(theta)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        actions_arr = np.random.uniform(-1,1,size=(max(10,5**nA),nA))
+        actions_arr = np.random.uniform(-1,1,size=(min(1000,5**nA),nA))
         latent_actions = action_feed_forward(action_net,actions_arr)
         action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
@@ -227,9 +233,9 @@ def eval(theta):
 
 ##########################################################################
 global env_name
-env_name = 'InvertedPendulumBulletEnv-v0'
+# env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
+env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -237,13 +243,13 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=0#if parallelize
+    useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
     theta_dim = get_theta_dim()
-    outfile = "twin_{}.txt".format(env_name+str(time.time()))
+    outfile = "files/twin_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
     b = 1
