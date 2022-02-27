@@ -44,13 +44,13 @@ class state_tower(nn.Module):
         state_dim = env.reset().size
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
-        #self.fc2 = nn.Linear(nA, nA, bias=False)
+        self.fc2 = nn.Linear(nA, nA, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    #x = torchF.relu(state_fc1(x))
+    #x = torchF.relu(state_net.fc1(x))
     x = state_net.fc1(x)
-    #x = state_net.fc2(x)
+    x = state_net.fc2(x)
     latent_state = x.detach().numpy()
     #latent_state = latent_state/sum(np.abs(latent_state)) #normalize
     return latent_state
@@ -61,13 +61,13 @@ class action_tower(nn.Module):
         env = gym.make(env_name)
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(nA, nA, bias=False)#can automate this. create nn for any given input layer dimensions, instead of fixed dimensions  
-        #self.fc2 = nn.Linear(nA, nA, bias=False)
+        self.fc2 = nn.Linear(nA, nA, bias=False)
 
 def action_feed_forward(action_net,action):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(action)).float()
-    #x = torchF.relu(fc1(x))
+    #x = torchF.relu(action_net.fc1(x))
     x = action_net.fc1(x)#can automate this. feedforward given nn dimensions
-    #x = action_net.fc2(x)
+    x = action_net.fc2(x)
     latent_action = x.detach().numpy()
     return latent_action
 
@@ -84,9 +84,9 @@ def get_action_net(theta):
     update_nn_params(action_net,theta[:action_nn_dim])
     return action_net
     
-def get_latent_actions(theta,nA):
+def get_latent_actions(actions_arr,theta):
     action_net = get_action_net(theta)
-    return action_feed_forward(action_net,all_actions)
+    return action_feed_forward(action_net,actions_arr)
 
 def get_theta_dim():
     state_net = state_tower()
@@ -162,9 +162,9 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
   return theta, accum_rewards
 
-def energy_action(latent_actions, latent_state):
+def energy_action(actions_arr, latent_actions, latent_state):
     energies = latent_actions@latent_state
-    return all_actions[np.argmin(energies)]
+    return actions_arr[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
     gym.logger.set_level(40)
@@ -177,12 +177,13 @@ def F(theta , gamma=1, max_step=5e3):
     a_dim = np.arange(nA)
     state_dim = state.size
     steps_count=0#cannot use global var here because subprocesses cannot edit global var
-    #preprocessing
-    latent_actions = get_latent_actions(theta,nA)
     state_net = get_state_net(theta)
+    action_net = get_action_net(theta)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        action = energy_action(latent_actions, latent_state)
+        actions_arr = np.random.uniform(-1,1,size=(max(10,5**nA),nA))
+        latent_actions = action_feed_forward(action_net,actions_arr)
+        action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
@@ -211,11 +212,13 @@ def eval(theta):
     a_dim = np.arange(nA)
     state_dim = state.size
     global time_step_count
-    latent_actions = get_latent_actions(theta,nA)
     state_net = get_state_net(theta)
+    action_net = get_action_net(theta)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        action = energy_action(latent_actions, latent_state)
+        actions_arr = np.random.uniform(-1,1,size=(max(10,5**nA),nA))
+        latent_actions = action_feed_forward(action_net,actions_arr)
+        action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         time_step_count+=1
         G += reward
@@ -249,7 +252,7 @@ if __name__ == '__main__':
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 
-    all_actions = np.random.uniform(low=-1,high=1,size=(10,nA))
+    #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
     #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
     
     t_start=time.time()
