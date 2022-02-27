@@ -142,7 +142,7 @@ def F(theta , gamma=1, max_step=5e3):
     state_dim = state.size
     steps_count=0#cannot use global var here because subprocesses cannot edit global var
     #preprocessing
-    
+
     fn = lambda a: get_latent_action(nA, a, theta)#must compute the table here, since each subprocess receives a different theta
     table = np.cumsum(np.array(list(map(fn, all_actions))), axis=0)
 ##    table = np.zeros((all_actions.shape))
@@ -201,7 +201,7 @@ def eval(theta):
 global env_name
 env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
+env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -209,7 +209,7 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=0#if parallelize
+    useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     env = gym.make(env_name)
     state_dim = env.reset().size
@@ -219,7 +219,7 @@ if __name__ == '__main__':
 
     theta_dim=nA*(state_dim+nA)
     #theta_dim = (state_dim + 1) * 2 * nA #gaus
-    outfile = "RF_{}.txt".format(env_name+str(time.time()))
+    outfile = "files/RF_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
     b = 1
@@ -235,7 +235,7 @@ if __name__ == '__main__':
         time_elapsed = int(round(time.time()-t_start))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 
