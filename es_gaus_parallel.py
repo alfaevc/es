@@ -218,6 +218,7 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
+    policy = "gaus"
     useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     gym.logger.set_level(40)
@@ -229,8 +230,8 @@ if __name__ == '__main__':
 
     import_theta = False
     # existing logged file
-    theta_file = "files/gaus_theta_{}.txt".format(env_name)
-    outfile = "files/gaus_{}.txt".format(env_name)
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name)
+    outfile = "files/{0}_{1}.txt".format(policy, env_name)
     
     b = 1
     
@@ -253,7 +254,7 @@ if __name__ == '__main__':
                 l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
                 theta0 = np.array(l)
         else: #New experiment
-            outfile = "files/gaus_{}.txt".format(env_name+t)
+            outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
             with open(outfile, "w") as f:
                 f.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
