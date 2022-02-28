@@ -243,8 +243,6 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    import_theta = False
-    theta_file = "twin_theta_HalfCheetah-v2.txt"
     useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     gym.logger.set_level(40)
@@ -253,10 +251,14 @@ if __name__ == '__main__':
     nA, = env.action_space.shape
     theta_dim = get_theta_dim()
     t = str(time.time())
-    outfile = "files/twin_{}.txt".format(env_name+t)
-    with open(outfile, "w") as f:
-        f.write("")
+
+    import_theta = False
+    # existing logged file
+    theta_file = "files/twin_theta_HalfCheetah-v2.txt"
+    outfile = "files/twin_HalfCheetah-v2.txt"
+    
     b = 1
+    
     num_seeds = 1
     max_epoch = 5001
     res = np.zeros((num_seeds, max_epoch))
@@ -271,13 +273,17 @@ if __name__ == '__main__':
         N = theta_dim#make n larger to show effect of parallelization on pendulum
         theta0 = np.random.standard_normal(size=theta_dim)
 
-        if import_theta:
-            with open(theta_file, "r") as g:
-                l = list(filter(len, re.split(' |\*|\n', g.readlines()[0])))
+        if import_theta: #Continue previous experiment
+            with open(theta_file, "r") as f:
+                l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
                 theta0 = np.array(l)
+        else: #New experiment
+            outfile = "files/twin_{}.txt".format(env_name+t)
+            with open(outfile, "w") as f:
+                f.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
-        with open(outfile, "a") as f:
-            f.write("Seed {}:\n".format(k))
+        # with open(outfile, "a") as f:
+        #     f.write("Seed {}:\n".format(k))
         theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)

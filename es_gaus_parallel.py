@@ -254,7 +254,7 @@ if __name__ == '__main__':
         time_elapsed = int(round(time.time()-t_start))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 
