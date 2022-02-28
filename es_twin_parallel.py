@@ -169,9 +169,10 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
     print(theta)
     out_theta_file = "files/twin_theta_{}.txt".format(env_name+t)
-    with open(out_theta_file, "w") as h:
-        for th in theta:
-            h.write("{} ".format(th))
+    np.savetxt(out_theta_file, theta, delimiter=' ', newline=' ')
+    # with open(out_theta_file, "w") as h:
+    #    for th in theta:
+    #        h.write("{} ".format(th))
         
   return theta, accum_rewards
 
