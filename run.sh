@@ -4,7 +4,7 @@
 #SBATCH --account=free # The account name for the job.
 #SBATCH --job-name=parallelES  # The job name.
 #SBATCH --exclusive
-#SBATCH -N 2 # The number of nodes to use.
+#SBATCH -N 1 # The number of nodes to use.
 #SBATCH --time=6:00:00 # The time the job will take to run.
 
 module load anaconda/3-2021.11
