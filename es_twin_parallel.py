@@ -254,8 +254,8 @@ if __name__ == '__main__':
 
     import_theta = False
     # existing logged file
-    theta_file = "files/twin_theta_HalfCheetah-v2.txt"
-    outfile = "files/twin_HalfCheetah-v2.txt"
+    theta_file = "files/twin_theta_{}.txt".format(env_name)
+    outfile = "files/twin_{}.txt".format(env_name)
     
     b = 1
     
