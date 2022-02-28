@@ -21,7 +21,7 @@ pip3 install mujoco-py
 
 #export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/rigel/home/yz3685/.mujoco/mujoco210/bin
 
-python es_twin_parallel.py
+python es_gaus_parallel.py
 
 
 # End of script

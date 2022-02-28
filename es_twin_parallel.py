@@ -167,7 +167,7 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     #if time_step_count>= 10**7: #terminate at given time step threshold.
     #    sys.exit()
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
-    print(theta)
+    # print(theta)
     out_theta_file = "files/twin_theta_{}.txt".format(env_name+t)
     np.savetxt(out_theta_file, theta, delimiter=' ', newline=' ')
     # with open(out_theta_file, "w") as h:
@@ -181,9 +181,6 @@ def energy_action(actions_arr, latent_actions, latent_state):
     return actions_arr[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
-    gym.logger.set_level(40)
-    env = gym.make(env_name)#this takes no time
-    nA, = env.action_space.shape
     G = 0.0
     done = False
     discount = 1
@@ -217,14 +214,9 @@ def F_arr(epsilons, sigma, theta):
     return [grad,steps_count]
 
 def eval(theta):
-    gym.logger.set_level(40)
-    env = gym.make(env_name)#this takes no time
-    nA, = env.action_space.shape
     G = 0.0
     done = False
     state = env.reset()
-    a_dim = np.arange(nA)
-    state_dim = state.size
     global time_step_count
     state_net = get_state_net(theta)
     action_net = get_action_net(theta)
@@ -255,6 +247,7 @@ if __name__ == '__main__':
     theta_file = "twin_theta_HalfCheetah-v2.txt"
     useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
+    gym.logger.set_level(40)
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
@@ -268,6 +261,7 @@ if __name__ == '__main__':
     max_epoch = 5001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
+
 
     #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
     #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
