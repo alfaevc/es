@@ -195,7 +195,7 @@ def eval(theta):
     state = env.reset()
     # a_dim = np.arange(nA)
    
-    gaus_net = get_gaus_net(theta)
+    gaus_net = get_gaus_net(theta, state_dim, nA)
     while not done:
         # WRITE CODE HERE
         # fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
