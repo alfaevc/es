@@ -8,7 +8,6 @@ import re
 import numpy as np
 
 import gym
-import pybullet_envs
 
 from es_gaus_parallel import get_gaus_net, gaus_feed_forward
 
@@ -19,6 +18,7 @@ def test_video(theta, env_name, method):
     if not os.path.exists(save_path):
         os.mkdir(save_path)
     # To create video
+    env = gym.make(env_name)
     env = gym.wrappers.Monitor(env, save_path, force=True)
     
     G = 0.0
@@ -26,12 +26,12 @@ def test_video(theta, env_name, method):
     state = env.reset()
     # a_dim = np.arange(nA)
    
-    gaus_net = get_gaus_net(theta)
+    gaus_net = get_gaus_net(theta, state_dim, nA)
     while not done:
         # fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
         #                 theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
         #mvs = np.array(list(map(fn, a_dim))).flatten()
-        a_mean, a_v = gaus_feed_forward(gaus_net,state)
+        a_mean, a_v = gaus_feed_forward(gaus_net,state,nA)
         action = np.tanh(np.random.normal(a_mean, a_v))
         # action = np.random.normal(a_mean[0], a_v[0])
         state, reward, done, _ = env.step(action)
@@ -49,15 +49,18 @@ env_name = 'Walker2d-v2'
   
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
 if __name__ == '__main__':
-    old_t = ""
     p = "gaus"
     method = "AT"
+    env = gym.make(env_name)
+    state_dim = env.reset().size
+    nA, = env.action_space.shape
 
-    theta_file = "files/{0}_theta_{1}.txt".format(p, env_name+old_t)
+    theta_file = "files/{0}_theta_{1}.txt".format(p, env_name)
 
     with open(theta_file, "r") as f:
         l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
-        theta = np.array(l)
+        theta = np.array(l, dtype=float)
+        print(theta)
     
     test_video(theta, env_name, method)
 

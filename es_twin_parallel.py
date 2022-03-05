@@ -297,7 +297,7 @@ if __name__ == '__main__':
         if import_theta: #Continue previous experiment
             with open(theta_file, "r") as f:
                 l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
-                theta0 = np.array(l)
+                theta0 = np.array(l, dtype=float)
         else: #New experiment
             outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
             with open(outfile, "w") as f:

@@ -2,7 +2,7 @@ import os
 import tqdm
 import numpy as np
 import gym
-import pybullet_envs
+# import pybullet_envs
 import time
 import math
 import multiprocessing as mp
@@ -40,7 +40,8 @@ def get_nn_dim(input_nn):
             counter+=shape[0]
     return counter
 
-def get_output(output, min_logvar=1, max_logvar=3):
+def get_output(output, nA, min_logvar=1, max_logvar=3):
+    sp = nn.Softplus()
     mu, raw_v = output[:nA], output[nA:]
     logvar = max_logvar - sp(max_logvar - raw_v)
     logvar = min_logvar + sp(logvar - min_logvar)
@@ -48,13 +49,13 @@ def get_output(output, min_logvar=1, max_logvar=3):
     return mu.detach().numpy(), logvar.detach().numpy()
 
 class Gaus(nn.Module):
-    def __init__(self):
+    def __init__(self, state_dim, nA):
         super(Gaus, self).__init__()
         self.fc1 = nn.Linear(state_dim, nA*2, bias=False)  
         self.fc2 = nn.Linear(2*nA, 2*nA, bias=False)
         self.fc3 = nn.Linear(2*nA, 2*nA, bias=False)
 
-def gaus_feed_forward(gaus_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
+def gaus_feed_forward(gaus_net,state,nA):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
     #x = torchF.relu(state_net.fc1(x))
     x = gaus_net.fc1(x)
@@ -63,16 +64,16 @@ def gaus_feed_forward(gaus_net,state):#have to separate feed_forward from the cl
     x = torchF.relu(x)
     x = gaus_net.fc3(x)
     
-    return get_output(x)
+    return get_output(x,nA)
 
-def get_gaus_net(theta):
-    gaus_net = Gaus()
+def get_gaus_net(theta, state_dim, nA):
+    gaus_net = Gaus(state_dim, nA)
     update_nn_params(gaus_net, theta)
     return gaus_net
 
 
-def get_theta_dim():
-    gaus_net = Gaus()
+def get_theta_dim(state_dim, nA):
+    gaus_net = Gaus(state_dim, nA)
     return get_nn_dim(gaus_net)
 
 def collect_result(result):
@@ -154,13 +155,13 @@ def F(theta , gamma=1, max_step=5e3):
     # a_dim = np.arange(nA)
     steps_count=0#cannot use global var here because subprocesses do not have access to global var
     # while not done:
-    gaus_net = get_gaus_net(theta)
+    gaus_net = get_gaus_net(theta, state_dim, nA)
     while not done and (steps < max_step):
         # WRITE CODE HERE
         # fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
         #                 theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
         #mvs = np.array(list(map(fn, a_dim))).flatten()
-        a_mean, a_v = gaus_feed_forward(gaus_net,state)
+        a_mean, a_v = gaus_feed_forward(gaus_net,state, nA)
         action = np.tanh(np.random.normal(a_mean, a_v))
         # action = np.random.normal(a_mean[0], a_v[0])
 
@@ -198,7 +199,7 @@ def eval(theta):
         # fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
         #                 theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
         #mvs = np.array(list(map(fn, a_dim))).flatten()
-        a_mean, a_v = gaus_feed_forward(gaus_net,state)
+        a_mean, a_v = gaus_feed_forward(gaus_net,state,nA)
         action = np.tanh(np.random.normal(a_mean, a_v))
         # action = np.random.normal(a_mean[0], a_v[0])
         state, reward, done, _ = env.step(action)
@@ -219,7 +220,6 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    sp = nn.Softplus()
     import_theta = False
     policy = "gaus"
     useParallel=1#if parallelize
@@ -228,7 +228,7 @@ if __name__ == '__main__':
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
-    theta_dim = get_theta_dim()
+    theta_dim = get_theta_dim(state_dim, nA)
     old_t = ""
     t = str(time.time())
 
@@ -256,7 +256,7 @@ if __name__ == '__main__':
         if import_theta: #Continue previous experiment
             with open(theta_file, "r") as f:
                 l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
-                theta0 = np.array(l)
+                theta0 = np.array(l, dtype=float)
         else: #New experiment
             outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
             with open(outfile, "w") as f:
