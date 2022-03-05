@@ -53,11 +53,13 @@ def get_output(output, nA, min_logvar=1, max_logvar=3):
 class Gaus(nn.Module):
     def __init__(self, state_dim, nA):
         super(Gaus, self).__init__()
+        self.state_dim = state_dim
+        self.nA = nA
         self.fc1 = nn.Linear(state_dim, nA*2, bias=False)  
         self.fc2 = nn.Linear(2*nA, 2*nA, bias=False)
         self.fc3 = nn.Linear(2*nA, 2*nA, bias=False)
 
-def gaus_feed_forward(gaus_net,state,nA):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
+def gaus_feed_forward(gaus_net, state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
     #x = torchF.relu(state_net.fc1(x))
     x = gaus_net.fc1(x)
@@ -66,7 +68,7 @@ def gaus_feed_forward(gaus_net,state,nA):#have to separate feed_forward from the
     x = torchF.relu(x)
     x = gaus_net.fc3(x)
     
-    return get_output(x,nA)
+    return get_output(x,gaus_net.nA)
 
 def get_gaus_net(theta, state_dim, nA):
     gaus_net = Gaus(state_dim, nA)
@@ -163,7 +165,7 @@ def F(theta , gamma=1, max_step=5e3):
         # fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
         #                 theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
         #mvs = np.array(list(map(fn, a_dim))).flatten()
-        a_mean, a_v = gaus_feed_forward(gaus_net,state, nA)
+        a_mean, a_v = gaus_feed_forward(gaus_net, state)
         action = np.tanh(np.random.normal(a_mean, a_v))
         # action = np.random.normal(a_mean[0], a_v[0])
 
@@ -201,7 +203,7 @@ def eval(theta):
         # fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
         #                 theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
         #mvs = np.array(list(map(fn, a_dim))).flatten()
-        a_mean, a_v = gaus_feed_forward(gaus_net,state,nA)
+        a_mean, a_v = gaus_feed_forward(gaus_net, state)
         action = np.tanh(np.random.normal(a_mean, a_v))
         # action = np.random.normal(a_mean[0], a_v[0])
         state, reward, done, _ = env.step(action)
@@ -266,7 +268,7 @@ if __name__ == '__main__':
         time_elapsed = int(round(time.time()-t_start))
         # with open(outfile, "a") as f:
         #     f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 

@@ -31,7 +31,7 @@ def test_video(theta, env_name, method):
         # fn = lambda a: [theta[2*a*(state_dim+1)] + state @ theta[2*a*(state_dim+1)+1: (2*a+1)*(state_dim+1)], 
         #                 theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
         #mvs = np.array(list(map(fn, a_dim))).flatten()
-        a_mean, a_v = gaus_feed_forward(gaus_net,state,nA)
+        a_mean, a_v = gaus_feed_forward(gaus_net, state)
         action = np.tanh(np.random.normal(a_mean, a_v))
         # action = np.random.normal(a_mean[0], a_v[0])
         state, reward, done, _ = env.step(action)
