@@ -28,6 +28,8 @@ def update_nn_params(input_nn,new_params):
             arr = new_params[current_index:current_index+shape[0]]
             params[i].data = (torch.from_numpy(arr)).float()
             current_index+=shape[0]
+    for param in params:#freeze params
+        param.requires_grad = False
 
 def get_nn_dim(input_nn):
     params = list(input_nn.parameters())
@@ -176,9 +178,14 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
         
   return theta, accum_rewards
 
-def energy_action(actions_arr, latent_actions, latent_state):
-    energies = latent_actions@latent_state
-    return actions_arr[np.argmin(energies)]
+def energy_action(actions_arr, latent_actions, latent_state,sample_size,unit):
+    #break down to dot products between arrays of length 1,000 to avoid memory leak 
+    best_energy,best_action = np.inf, actions_arr[0]
+    for i in range(sample_size):
+        energies = latent_actions[unit*i:unit*(i+1),:]@latent_state
+        if min(energies) < best_energy:
+            best_action = actions_arr[unit*i+np.argmin(energies)]
+    return best_action
 
 def F(theta , gamma=1, max_step=5e3):
     G = 0.0
@@ -190,11 +197,17 @@ def F(theta , gamma=1, max_step=5e3):
     steps_count=0#cannot use global var here because subprocesses cannot edit global var
     state_net = get_state_net(theta)
     action_net = get_action_net(theta)
+   #create a bank of latent actions.
+    unit = min(1000,max(10,5**nA))# > 1,000 will cause memory leak. have to break down into segments of 1,000
+    bank_size, sample_size = 2,1 #bank size and sample size are multiples of 1,000
+    actions_bank = np.random.uniform(-1,1,size=(bank_size*unit,nA))
+    latent_actions_bank = np.zeros((bank_size*unit,nA))#assume latent action has dim nA
+    for i in range(bank_size):#avoid memory leak
+        latent_actions_bank[unit*i:unit*(i+1)] = action_feed_forward(action_net,actions_bank[unit*i:unit*(i+1)])
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        actions_arr = np.random.uniform(-1,1,size=(min(1000,5**nA),nA))
-        latent_actions = action_feed_forward(action_net,actions_arr)
-        action = energy_action(actions_arr, latent_actions, latent_state)
+        ind=np.random.choice(np.arange(actions_bank.shape[0]), size=sample_size*unit, replace=True, p=None)
+        action = energy_action(actions_bank[ind], latent_actions_bank[ind], latent_state,sample_size,unit)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
@@ -220,11 +233,17 @@ def eval(theta):
     global time_step_count
     state_net = get_state_net(theta)
     action_net = get_action_net(theta)
+    #create a bank of latent actions.
+    unit = min(1000,max(10,5**nA))# > 1,000 will cause memory leak. have to break down into segments of 1,000
+    bank_size, sample_size = 2,1 #bank size and sample size are multiples of 1,000
+    actions_bank = np.random.uniform(-1,1,size=(bank_size*unit,nA))
+    latent_actions_bank = np.zeros((bank_size*unit,nA))#assume latent action has dim nA
+    for i in range(bank_size):#avoid memory leak
+        latent_actions_bank[unit*i:unit*(i+1)] = action_feed_forward(action_net,actions_bank[unit*i:unit*(i+1)])
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        actions_arr = np.random.uniform(-1,1,size=(min(1000,5**nA),nA))
-        latent_actions = action_feed_forward(action_net,actions_arr)
-        action = energy_action(actions_arr, latent_actions, latent_state)
+        ind=np.random.choice(np.arange(actions_bank.shape[0]), size=sample_size*unit, replace=True, p=None)
+        action = energy_action(actions_bank[ind], latent_actions_bank[ind], latent_state,sample_size,unit)
         state, reward, done, _ = env.step(action)
         time_step_count+=1
         G += reward
