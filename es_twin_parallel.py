@@ -251,12 +251,13 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
     theta_dim = get_theta_dim()
+    old_t = ""
     t = str(time.time())
 
     import_theta = False
     # existing logged file
-    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name)
-    outfile = "files/{0}_{1}.txt".format(policy, env_name)
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+old_t)
+    outfile = "files/{0}_{1}.txt".format(policy, env_name+old_t)
     
     b = 1
     

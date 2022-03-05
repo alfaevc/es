@@ -121,7 +121,7 @@ def orthogonal_epsilons(N,dim):
 def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100, t=0):
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
-  t1=time.time()
+  t1 = time.time()
   global time_step_count
   for i in range(max_epoch): 
     accum_rewards[i] = eval(theta)
@@ -131,7 +131,7 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
         f.write("%.d %.2f \n" % (i, accum_rewards[i]))
         #f.write("%.d %.2f %.d \n" % (i, accum_rewards[i],time_step_count))
     if i%5==0:
-        print('runtime until now: ',time.time()-t1)#, ' time step: ',time_step_count)
+        print('runtime until now: ', time.time()-t1)#, ' time step: ',time_step_count)
     #if time_step_count>= 10**7: #terminate at given time step threshold.
     #    sys.exit()
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
@@ -218,49 +218,44 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    policy = "gaus"
+    import_theta = False
+    theta_file = "gaus_theta_HalfCheetah-v2.txt"
     useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
-    gym.logger.set_level(40)
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
+    
+    sp = nn.Softplus
+    
     theta_dim = get_theta_dim()
     t = str(time.time())
-
-    import_theta = False
-    # existing logged file
-    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name)
-    outfile = "files/{0}_{1}.txt".format(policy, env_name)
-    
+    outfile = "files/gaus_{}.txt".format(env_name+t)
+    with open(outfile, "w") as f:
+        f.write("")
     b = 1
-    
     num_seeds = 1
     max_epoch = 5001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 
-
     #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
     #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
-    
+    sp = nn.Softplus()
+
     t_start=time.time()
     for k in tqdm.tqdm(range(num_seeds)):
         N = theta_dim#make n larger to show effect of parallelization on pendulum
         theta0 = np.random.standard_normal(size=theta_dim)
 
-        if import_theta: #Continue previous experiment
-            with open(theta_file, "r") as f:
-                l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
+        if import_theta:
+            with open(theta_file, "r") as g:
+                l = list(filter(len, re.split(' |\*|\n', g.readlines()[0])))
                 theta0 = np.array(l)
-        else: #New experiment
-            outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
-            with open(outfile, "w") as f:
-                f.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
-        # with open(outfile, "a") as f:
-        #     f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
+        with open(outfile, "a") as f:
+            f.write("Seed {}:\n".format(k))
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 
