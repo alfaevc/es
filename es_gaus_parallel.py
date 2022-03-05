@@ -210,7 +210,8 @@ def eval(theta):
 global env_name
 # env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-env_name = 'HalfCheetah-v2'
+# env_name = 'HalfCheetah-v2'
+env_name = "Walker2d-v2"
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -218,44 +219,52 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
+    sp = nn.Softplus()
     import_theta = False
-    theta_file = "gaus_theta_HalfCheetah-v2.txt"
+    policy = "gaus"
     useParallel=1#if parallelize
-    print("number of CPUs: ",mp.cpu_count())
+    print("number of CPUs: ", mp.cpu_count())
+    gym.logger.set_level(40)
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
-    
-    sp = nn.Softplus
-    
     theta_dim = get_theta_dim()
+    old_t = ""
     t = str(time.time())
-    outfile = "files/gaus_{}.txt".format(env_name+t)
-    with open(outfile, "w") as f:
-        f.write("")
+
+    import_theta = False
+    # existing logged file
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+old_t)
+    outfile = "files/{0}_{1}.txt".format(policy, env_name+old_t)
+    
     b = 1
+    
     num_seeds = 1
     max_epoch = 5001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 
+
     #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
     #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
-    sp = nn.Softplus()
-
+    
     t_start=time.time()
     for k in tqdm.tqdm(range(num_seeds)):
         N = theta_dim#make n larger to show effect of parallelization on pendulum
         theta0 = np.random.standard_normal(size=theta_dim)
 
-        if import_theta:
-            with open(theta_file, "r") as g:
-                l = list(filter(len, re.split(' |\*|\n', g.readlines()[0])))
+        if import_theta: #Continue previous experiment
+            with open(theta_file, "r") as f:
+                l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
                 theta0 = np.array(l)
+        else: #New experiment
+            outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
+            with open(outfile, "w") as f:
+                f.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
-        with open(outfile, "a") as f:
-            f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
+        # with open(outfile, "a") as f:
+        #     f.write("Seed {}:\n".format(k))
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 
