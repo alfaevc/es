@@ -28,6 +28,8 @@ def update_nn_params(input_nn,new_params):
             arr = new_params[current_index:current_index+shape[0]]
             params[i].data = (torch.from_numpy(arr)).float()
             current_index+=shape[0]
+    for param in params:#freeze params
+        param.requires_grad = False
 
 def get_nn_dim(input_nn):
     params = list(input_nn.parameters())
