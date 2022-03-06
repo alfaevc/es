@@ -42,7 +42,7 @@ def get_nn_dim(input_nn):
             counter+=shape[0]
     return counter
 
-def get_output(output, nA, min_logvar=1, max_logvar=3):
+def get_output(output, nA, min_logvar=1, max_logvar=5):
     sp = nn.Softplus()
     mu, raw_v = output[:nA], output[nA:]
     logvar = max_logvar - sp(max_logvar - raw_v)
@@ -132,8 +132,8 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     accum_rewards[i] = eval(theta)
     if i%1==0:
       print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))    
-      with open(filename, "a") as f:
-        f.write("%.d %.2f \n" % (i, accum_rewards[i]))
+      with open(filename, "a") as h:
+        h.write("%.d %.2f \n" % (i, accum_rewards[i]))
         #f.write("%.d %.2f %.d \n" % (i, accum_rewards[i],time_step_count))
     if i%5==0:
         print('runtime until now: ', time.time()-t1)#, ' time step: ',time_step_count)
@@ -224,8 +224,8 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    import_theta = False
     policy = "gaus"
+    import_theta = True
     useParallel=1#if parallelize
     print("number of CPUs: ", mp.cpu_count())
     gym.logger.set_level(40)
@@ -233,13 +233,15 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
     theta_dim = get_theta_dim(state_dim, nA)
-    old_t = ""
+    old_t = "1646516406.097503"
     t = str(time.time())
 
-    import_theta = False
+    if import_theta:
+        t = old_t
+
     # existing logged file
-    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+old_t)
-    outfile = "files/{0}_{1}.txt".format(policy, env_name+old_t)
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
+    outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
     
     b = 1
     
@@ -247,6 +249,7 @@ if __name__ == '__main__':
     max_epoch = 5001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
+
 
 
     #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
@@ -261,14 +264,14 @@ if __name__ == '__main__':
             with open(theta_file, "r") as f:
                 l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
                 theta0 = np.array(l, dtype=float)
+                print(theta0)
         else: #New experiment
-            outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
-            with open(outfile, "w") as f:
-                f.write("Seed {}:\n".format(k))
+            with open(outfile, "w") as g:
+                g.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
         # with open(outfile, "a") as f:
         #     f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 

@@ -263,20 +263,23 @@ time_step_count=0
 
 if __name__ == '__main__':
     policy = "twin"
+    import_theta = True
     useParallel=1#if parallelize
-    print("number of CPUs: ",mp.cpu_count())
+    print("number of CPUs: ", mp.cpu_count())
     gym.logger.set_level(40)
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
-    theta_dim = get_theta_dim()
+    theta_dim = get_theta_dim(state_dim, nA)
     old_t = ""
     t = str(time.time())
 
-    import_theta = False
+    if import_theta:
+        t = old_t
+
     # existing logged file
-    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+old_t)
-    outfile = "files/{0}_{1}.txt".format(policy, env_name+old_t)
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
+    outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
     
     b = 1
     
@@ -284,6 +287,7 @@ if __name__ == '__main__':
     max_epoch = 5001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
+
 
 
     #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
@@ -299,13 +303,12 @@ if __name__ == '__main__':
                 l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
                 theta0 = np.array(l, dtype=float)
         else: #New experiment
-            outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
-            with open(outfile, "w") as f:
-                f.write("Seed {}:\n".format(k))
+            with open(outfile, "w") as g:
+                g.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
         # with open(outfile, "a") as f:
         #     f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
     ns = range(1, len(accum_rewards)+1)
 

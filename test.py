@@ -15,14 +15,15 @@ from itertools import product
 if __name__ == '__main__':
   # env_name = 'InvertedPendulumBulletEnv-v0'
   # env_name = 'IceHockey-ram-v0'
-  env_name = 'BipedalWalker-v3'
+  # env_name = 'BipedalWalker-v3'
+  env_name = 'Walker2d-v2'
   # env_name = 'HalfCheetah-v2'
   # env_name = 'Swimmer-v2'
   # env_name = 'CartPole-v0'
   env = gym.make(env_name)
   state = env.reset()
   print(state.size)
-  print(env.action_space.shape[0])
+  print(env.action_space)
 
 
 

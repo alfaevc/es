@@ -55,7 +55,7 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
 
-    theta_file = "files/{0}_theta_{1}.txt".format(p, env_name)
+    theta_file = "files/{0}_theta_{1}.2.txt".format(p, env_name)
 
     with open(theta_file, "r") as f:
         l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
