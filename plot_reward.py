@@ -2,9 +2,10 @@ import numpy as np
 import statistics
 import csv
 #input filename and nFiles
-#file names must be '...(1).txt','....(2).txt','....(3).txt',etc
-filename = 'twin_HalfCheetah-v2 (1).txt'
-nFiles=3
+env_name = 'Swimmer-v2'
+filename = 'twin_'+env_name+' (1).txt'
+nFiles=1 #number of files to plot. 1st file should end with (1), 2nd file end with (2), etc
+
 def single_file_output(filename):
     with open(filename) as file:
         lines = file.readlines()
@@ -37,7 +38,7 @@ numIter = len(all_reward_arr)
 #plot 
 from matplotlib import pyplot
 pyplot.plot(np.arange(numIter), all_reward_arr)
-title='Half Cheetah Twin Tower'
+title=env_name+' Twin Tower'
 pyplot.title(title)
 pyplot.xlabel('epoch')
 pyplot.ylabel('reward')
