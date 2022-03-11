@@ -11,8 +11,6 @@ from itertools import product
 import torch
 import torch.nn as nn
 import torch.nn.functional as torchF
-
-import matplotlib.pyplot as plt
 import re
 
 def update_nn_params(input_nn,new_params):
@@ -45,20 +43,20 @@ def get_nn_dim(input_nn):
 class state_tower(nn.Module):
     def __init__(self):
         super(state_tower, self).__init__()
+        env = gym.make(env_name)
         state_dim = env.reset().size
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
         self.fc2 = nn.Linear(nA, nA, bias=False)
         self.fc3 = nn.Linear(nA, nA, bias=False)
+        self.fc4 = nn.Linear(nA, nA, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    #x = torchF.relu(state_net.fc1(x))
-    x = state_net.fc1(x)
-    x = torchF.relu(x)
-    x = state_net.fc2(x)
-    x = torchF.relu(x)
-    x = state_net.fc3(x)
+    x = torchF.relu(state_net.fc1(x))
+    x = torchF.relu(state_net.fc2(x))
+    x = torchF.relu(state_net.fc3(x))
+    x = torchF.relu(state_net.fc4(x))
     latent_state = x.detach().numpy()
     #latent_state = latent_state/sum(np.abs(latent_state)) #normalize
     return latent_state
@@ -66,16 +64,14 @@ def state_feed_forward(state_net,state):#have to separate feed_forward from the 
 class action_tower(nn.Module):
     def __init__(self):
         super(action_tower, self).__init__()
+        env = gym.make(env_name)
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(nA, nA, bias=False)#can automate this. create nn for any given input layer dimensions, instead of fixed dimensions  
         self.fc2 = nn.Linear(nA, nA, bias=False)
-        
 
 def action_feed_forward(action_net,action):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(action)).float()
-    #x = torchF.relu(action_net.fc1(x))
-    x = action_net.fc1(x)#can automate this. feedforward given nn dimensions
-    x = torchF.relu(x)
+    x = torchF.relu(action_net.fc1(x))
     x = action_net.fc2(x)
     latent_action = x.detach().numpy()
     return latent_action
@@ -104,11 +100,21 @@ def get_theta_dim():
     action_nn_dim = get_nn_dim(action_net)
     return action_nn_dim+state_nn_dim
 
+def get_latent_actions_scale_up(action_net,actions_arr,sample_size,unit):
+    #divide the work. else will take too long time once we scale
+    latent_actions_arr = np.zeros((sample_size*unit,nA))
+    for i in range(sample_size):
+        latent_actions_arr[unit*i:unit*(i+1)] = action_feed_forward(action_net,actions_arr[unit*i:unit*(i+1)])
+    return latent_actions_arr
+
 #############################################################################################################################################
 
 def collect_result(result):
     result_list.append(result[0])
-    steps_list.append(result[1])    
+    steps_list.append(result[1])
+
+def collect_result_eval(result):
+    reward.append(result)
     
 def AT_gradient_parallel(useParallel, theta, sigma=1, N=100):
     numCPU=mp.cpu_count()
@@ -119,25 +125,24 @@ def AT_gradient_parallel(useParallel, theta, sigma=1, N=100):
     N=jobs*numCPU
 
     epsilons=orthogonal_epsilons(N,theta.size)
-    global result_list#must be global for callback function to edit
-    result_list = []
-    global steps_list
-    steps_list = []
-    global time_step_count
-   
+    global result_list,steps_list,time_step_count,reward
+    result_list,steps_list,reward = [],[],[]
+
     if useParallel==1:
-        for i in range(numCPU):
+        for i in range(numCPU-1):#save one cpu for eval
             pool.apply_async(F_arr,args = (epsilons[i*jobs:(i+1)*jobs], sigma, theta),callback=collect_result)
+        pool.apply_async(F_eval,args = (theta,),callback=collect_result_eval)#use one cpu to evaluate
         pool.close()
         pool.join()
-        result_list = np.average(result_list,axis=0)
+        grad = np.average(result_list,axis=0)
         time_step_count+=sum(steps_list)
+        reward=reward[0]
     else:
         result_list = F_arr(epsilons,sigma,theta)
-        result_list = result_list[0]
+        grad = result_list[0]
         time_step_count+=result_list[1]
-    #print('result list:', result_list)
-    return result_list
+        reward = F_eval(theta)
+    return grad,reward
 
   
 def orthogonal_epsilons(N,dim):
@@ -152,66 +157,45 @@ def orthogonal_epsilons(N,dim):
       epsilons_N[i*dim:(i+1)*dim] = Q_normalize@Q
     return epsilons_N[0:N]
 
-def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100, t=0):
+def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, max_epoch=200, N=100):
   theta = np.copy(theta0)
   accum_rewards = np.zeros(max_epoch)
   t1=time.time()
   global time_step_count
-  for i in range(max_epoch): 
-    accum_rewards[i] = eval(theta)
-    if i%1==0:
-      print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))    
-      with open(filename, "a") as f:
+  for i in range(max_epoch):
+    grad,accum_rewards[i] = AT_gradient_parallel(useParallel, theta, sigma, N=N)
+    theta += eta*grad
+    print("The return for epoch {0} is {1}".format(i, accum_rewards[i]))    
+    with open(filename, "a") as f:
         f.write("%.d %.2f \n" % (i, accum_rewards[i]))
-        #f.write("%.d %.2f %.d \n" % (i, accum_rewards[i],time_step_count))
     if i%5==0:
         print('runtime until now: ',time.time()-t1)#, ' time step: ',time_step_count)
     #if time_step_count>= 10**7: #terminate at given time step threshold.
     #    sys.exit()
-    theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
-    # print(theta)
-    out_theta_file = "files/twin_theta_{}.txt".format(env_name+t)
+    out_theta_file = "files/twin_theta_{}.txt".format(env_name)#(env_name+t)
     np.savetxt(out_theta_file, theta, delimiter=' ', newline=' ')
-    # with open(out_theta_file, "w") as h:
-    #    for th in theta:
-    #        h.write("{} ".format(th))
-        
   return theta, accum_rewards
 
 def energy_action(actions_arr, latent_actions, latent_state,sample_size,unit):
-    #break down to dot products between arrays of length 1,000 to avoid memory leak 
-    best_energy,best_action = np.inf, actions_arr[0]
-    for i in range(sample_size):
-        energies = latent_actions[unit*i:unit*(i+1),:]@latent_state
-        if min(energies) < best_energy:
-            best_action = actions_arr[unit*i+np.argmin(energies)]
-    return best_action
+    energies = latent_actions@latent_state
+    return actions_arr[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
-    G = 0.0
-    done = False
-    discount = 1
-    state = env.reset()
-    a_dim = np.arange(nA)
-    state_dim = state.size
+    gym.logger.set_level(40); env = gym.make(env_name); state = env.reset()
+    G = 0.0; done = False; discount = 1; i=0
     steps_count=0#cannot use global var here because subprocesses cannot edit global var
     state_net = get_state_net(theta)
     action_net = get_action_net(theta)
-   #create a bank of latent actions.
-    unit = min(1000,max(10,5**nA))# > 1,000 will cause memory leak. have to break down into segments of 1,000
-    bank_size, sample_size = 2,1 #bank size and sample size are multiples of 1,000
     actions_bank = np.random.uniform(-1,1,size=(bank_size*unit,nA))
-    latent_actions_bank = np.zeros((bank_size*unit,nA))#assume latent action has dim nA
-    for i in range(bank_size):#avoid memory leak
-        latent_actions_bank[unit*i:unit*(i+1)] = action_feed_forward(action_net,actions_bank[unit*i:unit*(i+1)])
+    latent_actions_bank = get_latent_actions_scale_up(action_net,actions_bank,bank_size,unit)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        ind=np.random.choice(np.arange(actions_bank.shape[0]), size=sample_size*unit, replace=True, p=None)
-        action = energy_action(actions_bank[ind], latent_actions_bank[ind], latent_state,sample_size,unit)
+        action = energy_action(actions_bank[ind_arr[i]], latent_actions_bank[ind_arr[i]], latent_state,sample_size,unit)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
         discount *= gamma
+        i+=1
     return G,steps_count
 
 def F_arr(epsilons, sigma, theta):
@@ -226,105 +210,64 @@ def F_arr(epsilons, sigma, theta):
     grad = np.average(grad,axis=0)/sigma/2
     return [grad,steps_count]
 
-def eval(theta):
-    G = 0.0
-    done = False
-    state = env.reset()
+def F_eval(theta):
+    gym.logger.set_level(40); env = gym.make(env_name); state = env.reset()
+    G = 0.0; done = False; i=0
     global time_step_count
     state_net = get_state_net(theta)
     action_net = get_action_net(theta)
-    #create a bank of latent actions.
-    unit = min(1000,max(10,5**nA))# > 1,000 will cause memory leak. have to break down into segments of 1,000
-    bank_size, sample_size = 2,1 #bank size and sample size are multiples of 1,000
     actions_bank = np.random.uniform(-1,1,size=(bank_size*unit,nA))
-    latent_actions_bank = np.zeros((bank_size*unit,nA))#assume latent action has dim nA
-    for i in range(bank_size):#avoid memory leak
-        latent_actions_bank[unit*i:unit*(i+1)] = action_feed_forward(action_net,actions_bank[unit*i:unit*(i+1)])
+    latent_actions_bank = get_latent_actions_scale_up(action_net,actions_bank,bank_size,unit)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        ind=np.random.choice(np.arange(actions_bank.shape[0]), size=sample_size*unit, replace=True, p=None)
-        action = energy_action(actions_bank[ind], latent_actions_bank[ind], latent_state,sample_size,unit)
+        action = energy_action(actions_bank[ind_arr[i]], latent_actions_bank[ind_arr[i]], latent_state,sample_size,unit)
         state, reward, done, _ = env.step(action)
         time_step_count+=1
         G += reward
+        i+=1
     return G
 
 
 ##########################################################################
 global env_name
-# env_name = 'InvertedPendulumBulletEnv-v0'
+env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-env_name = 'HalfCheetah-v2'
+# env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
+# env_name = 'Walker2d-v2'
 global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    policy = "twin"
-    import_theta = True
-    useParallel=1#if parallelize
-    print("number of CPUs: ", mp.cpu_count())
-    gym.logger.set_level(40)
-    env = gym.make(env_name)
-    state_dim = env.reset().size
-    nA, = env.action_space.shape
-    theta_dim = get_theta_dim(state_dim, nA)
-    old_t = ""
-    t = str(time.time())
-
-    if import_theta:
-        t = old_t
-
-    # existing logged file
-    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
-    outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
-    
-    b = 1
-    
+    useParallel=0#if parallelize
+    import_theta = False
+    theta_file = "files/twin_theta_"+env_name+".txt"
+    env = gym.make(env_name); state_dim = env.reset().size; nA, = env.action_space.shape
+    theta_dim = get_theta_dim()
+    outfile = "files/twin_{}.txt".format(env_name+str(time.time()))
+    with open(outfile, "w") as f:
+        f.write("")
     num_seeds = 1
     max_epoch = 5001
-    res = np.zeros((num_seeds, max_epoch))
-    method = "AT_parallel"
-
-
-
-    #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
-    #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
+    #bootstrap sample size
+    unit = min(100,max(10,5**nA))# very slow if unit > 1,000. always avoid that. if needed, can decrease unit and increase sample_size
+    bank_size, sample_size = 10,5 #memory bank size is "bank_size*unit", bootstrap sample size is "sample_size*unit"
+    ind_arr = np.zeros((1000,sample_size*unit), dtype = int)
+    for i in range(1000):#trajectory length
+        ind_arr[i]=np.random.choice(np.arange(bank_size*unit), size=sample_size*unit, replace=True, p=None)
     
     t_start=time.time()
     for k in tqdm.tqdm(range(num_seeds)):
-        N = theta_dim#make n larger to show effect of parallelization on pendulum
+        N = theta_dim
         theta0 = np.random.standard_normal(size=theta_dim)
-
-        if import_theta: #Continue previous experiment
-            with open(theta_file, "r") as f:
-                l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))
-                theta0 = np.array(l, dtype=float)
-        else: #New experiment
-            with open(outfile, "w") as g:
-                g.write("Seed {}:\n".format(k))
+        if import_theta:
+            with open(theta_file, "r") as g:
+                l = list(filter(len, re.split(' |\*|\n', g.readlines()[0])))
+            for i in range(len(l)):#convert string to float
+                theta0[i] = float(l[i])
         time_elapsed = int(round(time.time()-t_start))
-        # with open(outfile, "a") as f:
-        #     f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
-        res[k] = np.array(accum_rewards)
-    ns = range(1, len(accum_rewards)+1)
-
-    avs = np.mean(res, axis=0)
-    maxs = np.max(res, axis=0)
-    mins = np.min(res, axis=0)
-
-    plt.fill_between(ns, mins, maxs, alpha=0.1)
-    plt.plot(ns, avs, '-o', markersize=1, label=env_name)
-
-    plt.legend()
-    plt.grid(True)
-    plt.xlabel('Iterations', fontsize = 15)
-    plt.ylabel('Return', fontsize = 15)
-
-    plt.title("Gaussian {0} ES".format(method), fontsize = 24)
-    plt.savefig("plots/Gaussian {0} ES {1}".format(method, env_name))
-
-
+        with open(outfile, "a") as f:
+            f.write("Seed {}:\n".format(k))
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=None, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N)
