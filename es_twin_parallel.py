@@ -230,18 +230,18 @@ def F_eval(theta):
 
 ##########################################################################
 global env_name
-env_name = 'InvertedPendulumBulletEnv-v0'
+# env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
 # env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
-# env_name = 'Humanoid-v2'
+env_name = 'Humanoid-v2'
 # env_name = 'Walker2d-v2'
 global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=0#if parallelize
+    useParallel=1#if parallelize
     import_theta = False
     theta_file = "files/twin_theta_"+env_name+".txt"
     env = gym.make(env_name); state_dim = env.reset().size; nA, = env.action_space.shape
@@ -270,4 +270,4 @@ if __name__ == '__main__':
         time_elapsed = int(round(time.time()-t_start))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=None, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=None, sigma=1.0, eta=1e-2, max_epoch=max_epoch, N=N)
