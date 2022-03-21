@@ -41,10 +41,12 @@ def test_video(theta, env_name, method):
     
 global env_name
 # env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
+env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
-env_name = 'Walker2d-v2'
+# env_name = 'Hopper-v2'
+# env_name = 'Walker2d-v2'
 # env_name = 'InvertedPendulumBulletEnv-v0'
+# env_name = 'Humanoid-v2'
 
   
 """The cell below applies your ES implementation to the RL objective you've defined in the cell above."""
@@ -55,7 +57,9 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
 
-    theta_file = "files/{0}_theta_{1}.2.txt".format(p, env_name)
+    time = "1646983240.632449"
+
+    theta_file = "files/{0}_theta_{1}.txt".format(p, env_name+time)
 
     with open(theta_file, "r") as f:
         l = list(filter(len, re.split(' |\*|\n', f.readlines()[0])))

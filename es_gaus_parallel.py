@@ -50,6 +50,10 @@ def get_output(output, nA, min_logvar=1, max_logvar=5):
 
     return mu.detach().numpy(), logvar.detach().numpy()
 
+'''
+cheetah: 3 hidden layer relu
+''' 
+
 class Gaus(nn.Module):
     def __init__(self, state_dim, nA):
         super(Gaus, self).__init__()
@@ -63,8 +67,10 @@ def gaus_feed_forward(gaus_net, state):#have to separate feed_forward from the c
     x = (torch.from_numpy(state)).float()
     #x = torchF.relu(state_net.fc1(x))
     x = gaus_net.fc1(x)
+    # x = torchF.tanh(x)
     x = torchF.relu(x)
     x = gaus_net.fc2(x)
+    # x = torchF.tanh(x)
     x = torchF.relu(x)
     x = gaus_net.fc3(x)
     
@@ -204,8 +210,8 @@ def eval(theta):
         #                 theta[(2*a+1)*(state_dim+1)] + state @ theta[(2*a+1)*(state_dim+1)+1: (2*a+2)*(state_dim+1)]]
         #mvs = np.array(list(map(fn, a_dim))).flatten()
         a_mean, a_v = gaus_feed_forward(gaus_net, state)
-        action = np.tanh(np.random.normal(a_mean, a_v))
-        # action = np.random.normal(a_mean[0], a_v[0])
+        action = np.tanh(a_mean)
+        # action = np.tanh(np.random.normal(a_mean[0], a_v[0]))
         state, reward, done, _ = env.step(action)
         G += reward
     return G
@@ -215,8 +221,9 @@ def eval(theta):
 global env_name
 # env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
-env_name = "Walker2d-v2"
+env_name = 'HalfCheetah-v2'
+# env_name = "Hopper-v2"
+#env_name = "Walker2d-v2"
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -225,7 +232,7 @@ time_step_count=0
 
 if __name__ == '__main__':
     policy = "gaus"
-    import_theta = True
+    import_theta = False
     useParallel=1#if parallelize
     print("number of CPUs: ", mp.cpu_count())
     gym.logger.set_level(40)
@@ -233,7 +240,7 @@ if __name__ == '__main__':
     state_dim = env.reset().size
     nA, = env.action_space.shape
     theta_dim = get_theta_dim(state_dim, nA)
-    old_t = "1646516406.097503"
+    old_t = "1647705038.8999553"
     t = str(time.time())
 
     if import_theta:
@@ -246,7 +253,7 @@ if __name__ == '__main__':
     b = 1
     
     num_seeds = 1
-    max_epoch = 5001
+    max_epoch = 1000
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 
@@ -273,6 +280,7 @@ if __name__ == '__main__':
         #     f.write("Seed {}:\n".format(k))
         theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=0.5, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
+    '''
     ns = range(1, len(accum_rewards)+1)
 
     avs = np.mean(res, axis=0)
@@ -289,5 +297,6 @@ if __name__ == '__main__':
 
     plt.title("Gaussian {0} ES".format(method), fontsize = 24)
     plt.savefig("plots/Gaussian {0} ES {1}".format(method, env_name))
+    '''
 
 

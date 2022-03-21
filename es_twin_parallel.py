@@ -41,17 +41,14 @@ def get_nn_dim(input_nn):
     return counter
 
 class state_tower(nn.Module):
-    def __init__(self):
+    def __init__(self, state_dim, nA):
         super(state_tower, self).__init__()
-        env = gym.make(env_name)
-        state_dim = env.reset().size
-        nA, = env.action_space.shape
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
         self.fc2 = nn.Linear(nA, nA, bias=False)
         self.fc3 = nn.Linear(nA, nA, bias=False)
         self.fc4 = nn.Linear(nA, nA, bias=False)
 
-def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
+def state_feed_forward(state_net, state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
     x = torchF.relu(state_net.fc1(x))
     x = torchF.relu(state_net.fc2(x))
@@ -62,10 +59,8 @@ def state_feed_forward(state_net,state):#have to separate feed_forward from the 
     return latent_state
 
 class action_tower(nn.Module):
-    def __init__(self):
+    def __init__(self, nA):
         super(action_tower, self).__init__()
-        env = gym.make(env_name)
-        nA, = env.action_space.shape
         self.fc1 = nn.Linear(nA, nA, bias=False)#can automate this. create nn for any given input layer dimensions, instead of fixed dimensions  
         self.fc2 = nn.Linear(nA, nA, bias=False)
 
@@ -76,26 +71,26 @@ def action_feed_forward(action_net,action):#have to separate feed_forward from t
     latent_action = x.detach().numpy()
     return latent_action
 
-def get_state_net(theta):
-    action_net = action_tower()
+def get_state_net(theta, state_dim, nA):
+    action_net = action_tower(nA)
     action_nn_dim = get_nn_dim(action_net)
-    state_net = state_tower()
+    state_net = state_tower(state_dim, nA)
     update_nn_params(state_net, theta[action_nn_dim:])
     return state_net
 
-def get_action_net(theta):
-    action_net = action_tower()
+def get_action_net(theta, nA):
+    action_net = action_tower(nA)
     action_nn_dim = get_nn_dim(action_net)
     update_nn_params(action_net,theta[:action_nn_dim])
     return action_net
     
 def get_latent_actions(actions_arr,theta):
-    action_net = get_action_net(theta)
+    action_net = get_action_net(theta, nA)
     return action_feed_forward(action_net,actions_arr)
 
-def get_theta_dim():
-    state_net = state_tower()
-    action_net = action_tower()
+def get_theta_dim(state_dim, nA):
+    state_net = state_tower(state_dim, nA)
+    action_net = action_tower(nA)
     state_nn_dim = get_nn_dim(state_net)
     action_nn_dim = get_nn_dim(action_net)
     return action_nn_dim+state_nn_dim
@@ -180,12 +175,12 @@ def energy_action(actions_arr, latent_actions, latent_state,sample_size,unit):
     energies = latent_actions@latent_state
     return actions_arr[np.argmin(energies)]
 
-def F(theta , gamma=1, max_step=5e3):
-    gym.logger.set_level(40); env = gym.make(env_name); state = env.reset()
+def F(theta, gamma=1, max_step=5e3):
+    state = env.reset()
     G = 0.0; done = False; discount = 1; i=0
     steps_count=0#cannot use global var here because subprocesses cannot edit global var
-    state_net = get_state_net(theta)
-    action_net = get_action_net(theta)
+    state_net = get_state_net(theta, state_dim, nA)
+    action_net = get_action_net(theta, nA)
     actions_bank = np.random.uniform(-1,1,size=(bank_size*unit,nA))
     latent_actions_bank = get_latent_actions_scale_up(action_net,actions_bank,bank_size,unit)
     while not done:
@@ -211,11 +206,11 @@ def F_arr(epsilons, sigma, theta):
     return [grad,steps_count]
 
 def F_eval(theta):
-    gym.logger.set_level(40); env = gym.make(env_name); state = env.reset()
+    state = env.reset()
     G = 0.0; done = False; i=0
     global time_step_count
-    state_net = get_state_net(theta)
-    action_net = get_action_net(theta)
+    state_net = get_state_net(theta, state_dim, nA)
+    action_net = get_action_net(theta, nA)
     actions_bank = np.random.uniform(-1,1,size=(bank_size*unit,nA))
     latent_actions_bank = get_latent_actions_scale_up(action_net,actions_bank,bank_size,unit)
     while not done:
@@ -233,22 +228,35 @@ global env_name
 # env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
 # env_name = 'HalfCheetah-v2'
-# env_name = 'Swimmer-v2'
+env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
-env_name = 'Humanoid-v2'
+# env_name = 'Humanoid-v2'
 # env_name = 'Walker2d-v2'
 global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=1#if parallelize
+    policy = "twin"
     import_theta = False
-    theta_file = "files/twin_theta_"+env_name+".txt"
-    env = gym.make(env_name); state_dim = env.reset().size; nA, = env.action_space.shape
-    theta_dim = get_theta_dim()
+    useParallel=1 #if parallelize
+
+    print("number of CPUs: ", mp.cpu_count())
+    gym.logger.set_level(40)
+    env = gym.make(env_name)
+    state_dim = env.reset().size 
+    nA, = env.action_space.shape
+    theta_dim = get_theta_dim(state_dim, nA)
+
+    old_t = ""
+    t = str(time.time())
+
+    if import_theta:
+        t = old_t
+    
+    # existing logged file
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
     outfile = "files/twin_{}.txt".format(env_name+str(time.time()))
-    with open(outfile, "w") as f:
-        f.write("")
+    
     num_seeds = 1
     max_epoch = 5001
     #bootstrap sample size
@@ -265,8 +273,10 @@ if __name__ == '__main__':
         if import_theta:
             with open(theta_file, "r") as g:
                 l = list(filter(len, re.split(' |\*|\n', g.readlines()[0])))
-            for i in range(len(l)):#convert string to float
-                theta0[i] = float(l[i])
+                theta0 = np.array(l, dtype=float)
+        else: #New experiment
+            with open(outfile, "w") as g:
+                g.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
         with open(outfile, "a") as f:
             f.write("Seed {}:\n".format(k))

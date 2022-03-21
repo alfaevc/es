@@ -42,40 +42,41 @@ def main():
 '''
 
 def main():
-    env_name = "InvertedPendulumBulletEnv-v0"
+    # env_name = "InvertedPendulumBulletEnv-v0"
     # env_name = 'LunarLanderContinuous-v2'
+    env_name = "Hopper-v2"
 
-    energy_vertex_res = np.zeros((3, 101))
+    time = "1646959575.0228987"
 
-    ev_seed = 3
-    ev_epochs = 101
+    evals_list = []
 
-    ev_ns = k = range(ev_epochs)
-    # ev_evals = []
+    ev_seed = 1
+
+    method = "gaus"
 
     for i in range(ev_seed):
-        ev_evals = []
-        filename = "files/twin_energy_gradInvertedPendulumBulletEnv-v0.txt"
+        evals = []
+        filename = "files/{}_{}.txt".format(method, env_name + time)
         #filename = "files/energy_vertex_sampling_lunarlander_sample_9_actions/twin_energy_LunarLanderContinuous-v2({}).txt".format(i)
-
-        method = "AT"
 
         with open(filename, "r") as f:
             lines = f.readlines()
-            for j in range(i*(ev_epochs+1)+1, i*(ev_epochs+1)+ev_epochs+1):
+            N = len(lines)
+            for j in range(1,N,1):
                 l = list(filter(len, re.split(' |\*|\n', lines[j])))
-                ev_evals.append(float(l[-1]))
+                evals.append(float(l[-1]))
         
-            energy_vertex_res[i] = np.array(ev_evals)
+            evals_list.append(np.array(evals))
     
     
-    avs = np.mean(energy_vertex_res, axis=0)
-    maxs = np.max(energy_vertex_res, axis=0)
-    mins = np.min(energy_vertex_res, axis=0)
+    avs = np.mean(evals_list, axis=0)
+    maxs = np.max(evals_list, axis=0)
+    mins = np.min(evals_list, axis=0)
 
+    ns = np.arange(N-1)
 
-    plt.fill_between(ev_ns, mins, maxs, alpha=0.1)
-    plt.plot(ev_ns, avs, '-o', markersize=1, label='Twin Energy Vertex')
+    plt.fill_between(ns, mins, maxs, alpha=0.1)
+    plt.plot(ns, avs, '-o', markersize=1)
 
     # plt.fill_between(ns, mins, maxs, alpha=0.1)
     # plt.plot(ns, ns, '-o', markersize=1, label='Shit')
@@ -86,7 +87,7 @@ def main():
     plt.ylabel('Return', fontsize = 15)
 
     plt.title("{0} ES {1}".format(method, env_name), fontsize = 20)
-    plt.savefig("plots/Twin Energy {0} ES {1}".format(method, env_name))
+    plt.savefig("plots/{0} ES {1}.png".format(method, env_name+time))
 
 
 if __name__ == '__main__':
