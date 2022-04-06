@@ -184,8 +184,6 @@ def energy_action(actions_arr, latent_actions, latent_state):
     return actions_arr[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
-    gym.logger.set_level(40)
-    env = gym.make(env_name)#this takes no time
     nA, = env.action_space.shape
     G = 0.0
     done = False
@@ -220,14 +218,12 @@ def F_arr(epsilons, sigma, theta):
     return [grad,steps_count]
 
 def eval(theta):
-    gym.logger.set_level(40)
-    env = gym.make(env_name)#this takes no time
     nA, = env.action_space.shape
     G = 0.0
     done = False
     state = env.reset()
-    a_dim = np.arange(nA)
-    state_dim = state.size
+    # a_dim = np.arange(nA)
+    # state_dim = state.size
     global time_step_count
     state_net = get_state_net(theta)
     action_net = get_action_net(theta)
@@ -254,23 +250,30 @@ global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
+    policy = "twin"
     import_theta = True
-    #theta_file = "files/twin_theta_InvertedPendulumBulletEnv-v0.txt"
-    theta_file = "files/twin_theta_HalfCheetah-v2.txt"
     useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
+    gym.logger.set_level(40)
     env = gym.make(env_name)
     state_dim = env.reset().size
     nA, = env.action_space.shape
     theta_dim = get_theta_dim()
-    t = str(time.time())
-    outfile = "files/twin_{}.txt".format(env_name+t)
-    with open(outfile, "w") as f:
-        f.write("")
     num_seeds = 1
-    max_epoch = 2001
+    max_epoch = 4001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
+
+    old_t = ""
+
+    t = str(time.time())
+
+    if import_theta:
+        t = old_t
+
+    # existing logged file
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
+    outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
 
     #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
     #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
@@ -283,14 +286,16 @@ if __name__ == '__main__':
         if import_theta:
             with open(theta_file, "r") as g:
                 l = list(filter(len, re.split(' |\*|\n', g.readlines()[0])))
-                #theta0 = np.array(l)#theta0 will be strings, not float
-            for i in range(len(l)):#convert string to float
-                theta0[i] = float(l[i])
+                theta0 = np.array(l, dtype=float)
+                print(theta0)
+        else: #New experiment
+            with open(outfile, "w") as g:
+                g.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
-        with open(outfile, "a") as f:
-            f.write("Seed {}:\n".format(k))
         theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
+    
+    '''
     ns = range(1, len(accum_rewards)+1)
 
     avs = np.mean(res, axis=0)
@@ -307,5 +312,6 @@ if __name__ == '__main__':
 
     plt.title("Gaussian {0} ES".format(method), fontsize = 24)
     plt.savefig("plots/Gaussian {0} ES {1}".format(method, env_name))
+    '''
 
 
