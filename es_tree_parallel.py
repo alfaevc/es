@@ -177,21 +177,23 @@ def energy_action(nA,table, latent_state,actions_arr):
         #go to next level of depth
         mid = (left+right)/2#not an integer
         left_latent_action_sum = table[math.ceil(mid)]
+        right_latent_action_sum = table[right]-left_latent_action_sum
         if left>0:
-            left_latent_action_sum = table[math.ceil(mid)] - table[left-1]       
-        right_latent_action_sum = table[right]-table[math.floor(mid)]
+            left_latent_action_sum -= table[left-1]       
         #product of energy is better than sum of energy
         multiplier = 5
-        normalizing_constant = (0.1+max(abs(left_latent_action_sum@latent_state),
-                                      abs(right_latent_action_sum@latent_state)))/multiplier
-        left_prob = np.exp(left_latent_action_sum@latent_state/normalizing_constant)
-        right_prob = np.exp(right_latent_action_sum@latent_state/normalizing_constant) #this is product of energy
+        left_dp = np.dot(left_latent_action_sum, latent_state)
+        right_dp = np.dot(right_latent_action_sum, latent_state)
+        normalizing_constant = (0.1+max(abs(left_dp),
+                                      abs(right_dp)))/multiplier
+        left_prob = np.exp(left_dp/normalizing_constant)
+        right_prob = np.exp(right_dp/normalizing_constant) #this is product of energy
         
         p = left_prob/(left_prob+right_prob)
         if p>1 or math.isnan(p)==True:#error happens
             print('p: ',p,'left prob: ',left_prob,'right prob: ',right_prob)
         coin_toss = np.random.binomial(1, p)
-        if coin_toss ==1:#go left
+        if coin_toss == 1:#go left
             right=math.floor(mid)
         else:#go right
             left = math.ceil(mid)
@@ -274,6 +276,7 @@ time_step_count=0
 
 if __name__ == '__main__':
     import_theta = False
+    sample_size = 32; unit =512 #total sample amount = sampling_size*unit
     useParallel=0#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     gym.logger.set_level(40)
