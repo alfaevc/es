@@ -13,6 +13,8 @@ import torch.nn as nn
 import torch.nn.functional as torchF
 from sklearn import preprocessing
 
+import re
+
 def update_nn_params(input_nn,new_params):
     params = list(input_nn.parameters())
     current_index= 0
@@ -163,7 +165,7 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     #if time_step_count>= 10**7: #terminate at given time step threshold.
     #    sys.exit()
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
-    out_theta_file = "files/twin_theta_{}.txt".format(env_name)#(env_name+t)
+    out_theta_file = "files/twin_theta_{}.txt".format(env_name+t)#(env_name+t)
     np.savetxt(out_theta_file, theta, delimiter=' ', newline=' ')
   return theta, accum_rewards
 
@@ -220,7 +222,7 @@ def F(theta , gamma=1, max_step=5e3):
     state_net = get_state_net(theta)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        action = energy_action(nA, table, latent_state,sorted_actions_arr)
+        action = energy_action(nA, table, latent_state, sorted_actions_arr)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
@@ -258,28 +260,42 @@ def eval(theta):
 
 ##########################################################################
 global env_name
+global policy
 # env_name = 'InvertedPendulumBulletEnv-v0'
 # env_name = 'FetchPush-v1'
 env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
+
+policy = "RF"
 global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    useParallel=1#if parallelize
     import_theta = False
-    theta_file = "files/tree_theta_"+env_name+".txt"
-    env = gym.make(env_name); state_dim = env.reset().size; nA, = env.action_space.shape
-    sample_size = 32;unit =512 #total sample amount = sampling_size*unit
+    useParallel=0#if parallelize
+    print("number of CPUs: ",mp.cpu_count())
+    gym.logger.set_level(40)
+    env = gym.make(env_name)
+    state_dim = env.reset().size
+    nA, = env.action_space.shape
     theta_dim = get_theta_dim()
-    outfile = "positive_RF_{}.txt".format(env_name+str(time.time()))
-    with open(outfile, "w") as f:
-        f.write("")
     num_seeds = 1
-    max_epoch = 4001
- 
+    max_epoch = 1001
+    res = np.zeros((num_seeds, max_epoch))
+    method = "AT_parallel"
+
+    old_t = "1649190591.4257033"
+
+    t = str(time.time())
+
+    if import_theta:
+        t = old_t
+
+    # existing logged file
+    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
+    outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
     t_start=time.time()
     for k in tqdm.tqdm(range(num_seeds)):
         N = theta_dim

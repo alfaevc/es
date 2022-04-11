@@ -221,7 +221,7 @@ time_step_count=0
 
 if __name__ == '__main__':
     import_theta = False
-    useParallel=1#if parallelize
+    useParallel=0#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     gym.logger.set_level(40)
     env = gym.make(env_name)
@@ -257,5 +257,5 @@ if __name__ == '__main__':
             with open(outfile, "w") as g:
                 g.write("Seed {}:\n".format(k))
         time_elapsed = int(round(time.time()-t_start))
-        theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
+        theta, accum_rewards = gradascent(useParallel, theta0, outfile, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
