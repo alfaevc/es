@@ -253,7 +253,7 @@ policy = "twin"
 time_step_count=0
 
 if __name__ == '__main__':
-    import_theta = True
+    import_theta = False
     useParallel=1#if parallelize
     print("number of CPUs: ",mp.cpu_count())
     gym.logger.set_level(40)
@@ -262,7 +262,7 @@ if __name__ == '__main__':
     nA, = env.action_space.shape
     theta_dim = get_theta_dim()
     num_seeds = 1
-    max_epoch = 4001
+    max_epoch = 1001
     res = np.zeros((num_seeds, max_epoch))
     method = "AT_parallel"
 

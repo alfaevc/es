@@ -44,36 +44,40 @@ def main():
 def main():
     # env_name = "InvertedPendulumBulletEnv-v0"
     # env_name = 'LunarLanderContinuous-v2'
-    env_name = "Hopper-v2"
+    # env_name = "Hopper-v2"
+    env_name = "HalfCheetah-v2"
 
-    time = "1646959575.0228987"
 
     evals_list = []
 
-    ev_seed = 1
+    ev_seeds = ["1649454729.969542", "1649264146.8901012", "1649267051.6858408",
+                "1649267163.5702064", "1649355160.8114576", "1649355160.4007642",
+                "1649355161.2410011", "1649434333.5052044", "1649454680.8482714",
+                "1649190591.4257033"]
 
-    method = "gaus"
+    N = 4000
 
-    for i in range(ev_seed):
+    method = "twin"
+
+    for s in ev_seeds:
         evals = []
-        filename = "files/{}_{}.txt".format(method, env_name + time)
+        filename = "files/{}_{}.txt".format(method, env_name + s)
         #filename = "files/energy_vertex_sampling_lunarlander_sample_9_actions/twin_energy_LunarLanderContinuous-v2({}).txt".format(i)
 
         with open(filename, "r") as f:
             lines = f.readlines()
-            N = len(lines)
-            for j in range(1,N,1):
+            for j in range(1,N+1,1):
                 l = list(filter(len, re.split(' |\*|\n', lines[j])))
                 evals.append(float(l[-1]))
         
-            evals_list.append(np.array(evals))
+        evals_list.append(np.array(evals))
     
     
     avs = np.mean(evals_list, axis=0)
     maxs = np.max(evals_list, axis=0)
     mins = np.min(evals_list, axis=0)
 
-    ns = np.arange(N-1)
+    ns = np.arange(N)
 
     plt.fill_between(ns, mins, maxs, alpha=0.1)
     plt.plot(ns, avs, '-o', markersize=1)
@@ -87,7 +91,7 @@ def main():
     plt.ylabel('Return', fontsize = 15)
 
     plt.title("{0} ES {1}".format(method, env_name), fontsize = 20)
-    plt.savefig("plots/{0} ES {1}.png".format(method, env_name+time))
+    plt.savefig("plots/{0} ES {1}.png".format(method, env_name))
 
 
 if __name__ == '__main__':
