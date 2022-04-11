@@ -79,19 +79,19 @@ def main():
 
     ns = np.arange(N)
 
-    plt.fill_between(ns, mins, maxs, alpha=0.1)
-    plt.plot(ns, avs, '-o', markersize=1)
+    plt.fill_between(ns, mins, maxs, alpha=0.35)
+    plt.plot(ns, avs, '-o', markersize=1, label='Twin')
 
     # plt.fill_between(ns, mins, maxs, alpha=0.1)
     # plt.plot(ns, ns, '-o', markersize=1, label='Shit')
 
-    # plt.legend()
+    plt.legend()
     plt.grid(True)
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
 
-    plt.title("{0} ES {1}".format(method, env_name), fontsize = 20)
-    plt.savefig("plots/{0} ES {1}.png".format(method, env_name))
+    plt.title("ES {0} 10 seeds".format(env_name), fontsize = 20)
+    plt.savefig("plots/ES {0} 10 seeds.png".format(env_name))
 
 
 if __name__ == '__main__':
