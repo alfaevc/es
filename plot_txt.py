@@ -47,43 +47,50 @@ def main():
     # env_name = "Hopper-v2"
     env_name = "HalfCheetah-v2"
 
+    methods = ["twin", "standard"]
 
-    evals_list = []
-
-    ev_seeds = ["1649454729.969542", "1649264146.8901012", "1649267051.6858408",
+    d = {}
+    
+    twin_ev_seeds = ["1649454729.969542", "1649264146.8901012", "1649267051.6858408",
                 "1649267163.5702064", "1649355160.8114576", "1649355160.4007642",
                 "1649355161.2410011", "1649434333.5052044", "1649454680.8482714",
                 "1649190591.4257033"]
+    
+    standard_ev_seeds = ["1649837482.846523", "1649837477.2299407", "1649837113.5510046",
+                "1649815887.2139251", "1649815887.2133114", "1649681269.410244",
+                "1649681232.7885218", "1649679362.5310104", "1649659663.1422014",
+                "1649659626.074103"]
+    
+    d["twin"] = twin_ev_seeds
+    d["standard"] = standard_ev_seeds
 
     N = 4000
 
-    method = "twin"
+    for i in range(len(methods)):
+        evals_list = []
+        for s in d[methods[i]]:
+            evals = []
+            filename = "files/{0}/{0}_{1}.txt".format(methods[i], env_name+s)
+            #filename = "files/energy_vertex_sampling_lunarlander_sample_9_actions/twin_energy_LunarLanderContinuous-v2({}).txt".format(i)
 
-    for s in ev_seeds:
-        evals = []
-        filename = "files/{}_{}.txt".format(method, env_name + s)
-        #filename = "files/energy_vertex_sampling_lunarlander_sample_9_actions/twin_energy_LunarLanderContinuous-v2({}).txt".format(i)
-
-        with open(filename, "r") as f:
-            lines = f.readlines()
-            for j in range(1,N+1,1):
-                l = list(filter(len, re.split(' |\*|\n', lines[j])))
-                evals.append(float(l[-1]))
-        
-        evals_list.append(np.array(evals))
+            with open(filename, "r") as f:
+                lines = f.readlines()
+                for j in range(1,N+1,1):
+                    l = list(filter(len, re.split(' |\*|\n', lines[j])))
+                    evals.append(float(l[-1]))
+            
+            evals_list.append(np.array(evals))
     
     
-    avs = np.mean(evals_list, axis=0)
-    maxs = np.max(evals_list, axis=0)
-    mins = np.min(evals_list, axis=0)
+        avs = np.mean(evals_list, axis=0)
+        maxs = np.max(evals_list, axis=0)
+        mins = np.min(evals_list, axis=0)
 
-    ns = np.arange(N)
+        ns = np.arange(N)
 
-    plt.fill_between(ns, mins, maxs, alpha=0.35)
-    plt.plot(ns, avs, '-o', markersize=1, label='Twin')
+        plt.fill_between(ns, mins, maxs, alpha=0.35)
+        plt.plot(ns, avs, '-o', markersize=1, label=methods[i])
 
-    # plt.fill_between(ns, mins, maxs, alpha=0.1)
-    # plt.plot(ns, ns, '-o', markersize=1, label='Shit')
 
     plt.legend()
     plt.grid(True)
