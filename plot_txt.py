@@ -47,7 +47,8 @@ def main():
     # env_name = "Hopper-v2"
     env_name = "HalfCheetah-v2"
 
-    methods = ["twin", "standard", "onetower"]
+    methods = ["standard", "onetower", "twin"]
+    terms = ["explicit", "IOT", "ITT"]
 
     d = {}
     
@@ -94,15 +95,16 @@ def main():
         ns = np.arange(N)
 
         plt.fill_between(ns, mins, maxs, alpha=0.35)
-        plt.plot(ns, avs, '-o', markersize=1, label=methods[i])
+        plt.plot(ns, avs, '-o', markersize=1, label=terms[i])
 
 
     plt.legend(loc='best', bbox_to_anchor=(0.5, 0., 0.5, 0.5))
     plt.grid(True)
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
+    plt.ylim([-1000, 4000])
 
-    plt.title("ES {0} 10 seeds".format(env_name), fontsize = 20)
+    plt.title("ES {0}".format(env_name), fontsize = 20)
     plt.savefig("plots/ES {0} 10 seeds.png".format(env_name))
 
 
