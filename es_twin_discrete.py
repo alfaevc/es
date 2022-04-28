@@ -69,7 +69,7 @@ class action_tower(nn.Module):
         super(action_tower, self).__init__()
         nA = env.action_space.n
         self.fc1 = nn.Linear(1, nA, bias=False)#can automate this. create nn for any given input layer dimensions, instead of fixed dimensions  
-        self.fc2 = nn.Linear(nA, nA, bias=False)
+        # self.fc2 = nn.Linear(nA, nA, bias=False)
         
 
 def action_feed_forward(action_net,action):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors

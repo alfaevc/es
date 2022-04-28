@@ -46,9 +46,9 @@ class state_tower(nn.Module):
     def __init__(self):
         super(state_tower, self).__init__()
         state_dim = env.reset().size
-        nA, = env.action_space.shape
-        self.fc1 = nn.Linear(state_dim+nA, nA, bias=False)  
-        self.fc2 = nn.Linear(nA, nA, bias=False)
+        nA = env.action_space.n
+        self.fc1 = nn.Linear(state_dim+1, nA, bias=False) 
+        self.fc2 = nn.Linear(nA, 1, bias=False)
         # self.fc3 = nn.Linear(nA, nA, bias=False)
         # self.fc4 = nn.Linear(nA, nA, bias=False)
         # self.fc5 = nn.Linear(nA, nA, bias=False)
@@ -149,15 +149,12 @@ def gradascent(useParallel, theta0, filename, sigma=1, eta=1e-3, max_epoch=200, 
   return theta, accum_rewards
 
 def energy_action(state_net,state):
-    unit=500 #somehow forward feed 1,000 inputs is super slow. break down into multiple passes
-    num_pass=math.floor(sample_amount/unit)
-    energies=np.zeros(num_pass*unit)
-    actions_arr = np.random.uniform(-1,1,size=(num_pass*unit,nA))
-    state_arr = np.tile(state,(num_pass*unit,1))
+    actions = np.arange(nA)
+    actions_arr = actions.reshape((nA,1))
+    state_arr = np.tile(state,(nA,1))
     state_action_arr = np.concatenate((state_arr, actions_arr), axis=1)
-    for i in range(num_pass):
-        energies[i*unit:(i+1)*unit] = state_feed_forward(state_net, state_action_arr[i*unit:(i+1)*unit])[:,0]
-    return actions_arr[np.argmin(energies)]
+    energies = state_feed_forward(state_net, state_action_arr).reshape(-1)
+    return actions[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
     gym.logger.set_level(40)
@@ -191,7 +188,6 @@ def F_arr(epsilons, sigma, theta):
 def eval(theta):
     # gym.logger.set_level(40)
     # env = gym.make(env_name)#this takes no time
-    # nA, = env.action_space.shape
     G = 0.0
     done = False
     state = env.reset()
@@ -210,33 +206,27 @@ def eval(theta):
 ##########################################################################
 global env_name
 global policy
-# env_name = 'MountainCarContinuous-v0'
-env_name = 'InvertedPendulumBulletEnv-v0'
-# env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
+# env_name = "CartPole-v1"
+# env_name = 'MountainCar-v0'
+env_name = 'Acrobot-v1'
+
 policy = "onetower"
-# env_name = 'Swimmer-v2'
-# env_name = 'LunarLanderContinuous-v2'
-# env_name = 'Humanoid-v2'
-# env_name = 'Walker2d-v2'
-# env_name = 'Hopper-v2'
 global time_step_count
 time_step_count=0
 
 if __name__ == '__main__':
-    sample_amount = 1000 #how many samples each time step
     num_seeds = 10
-    max_epoch = 201
+    max_epoch = 501
     res = np.zeros((num_seeds, max_epoch))
 
     for k in tqdm.tqdm(range(num_seeds)):
         import_theta = False
-        useParallel=0#if parallelize
+        useParallel=1 #if parallelize
         print("number of CPUs: ",mp.cpu_count())
         gym.logger.set_level(40)
         env = gym.make(env_name)
         state_dim = env.reset().size
-        nA, = env.action_space.shape
+        nA = env.action_space.n
         theta_dim = get_theta_dim()
         method = "AT_parallel"
 

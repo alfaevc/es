@@ -46,10 +46,10 @@ class state_tower(nn.Module):
     def __init__(self):
         super(state_tower, self).__init__()
         state_dim = env.reset().size
-        nA, = env.action_space.shape
+        nA = env.action_space.n
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
         self.fc2 = nn.Linear(nA, nA, bias=False)
-        self.fc3 = nn.Linear(nA, nA, bias=False)
+        # self.fc3 = nn.Linear(nA, nA, bias=False)
         # self.fc4 = nn.Linear(nA, nA, bias=False)
         # self.fc5 = nn.Linear(nA, nA, bias=False)
         # self.fc6 = nn.Linear(nA, nA, bias=False)
@@ -62,13 +62,15 @@ def state_feed_forward(state_net,state):#have to separate feed_forward from the 
     # x = torchF.relu(state_net.fc4(x))
     # x = torchF.relu(state_net.fc5(x))
     # x = state_net.fc1(x)
-    x = state_net.fc2(x)
-    x = state_net.fc3(x)
+    # x = state_net.fc2(x)
+    # x = state_net.fc3(x)
     #x = state_net.fc4(x)
     #x = state_net.fc5(x)
     # x = state_net.fc6(x)
+    x = torchF.softmax(state_net.fc2(x))
+    # x = torchF.softmax(state_net.fc3(x))
     action = x.detach().numpy()
-    action = np.tanh(action)
+    action = np.argmax(action)
     return action
 
 def get_state_net(theta):
@@ -149,14 +151,11 @@ def gradascent(useParallel, theta0, filename, sigma=1, eta=1e-3, max_epoch=200, 
         
   return theta, accum_rewards
 
-def energy_action(actions_arr, latent_actions, latent_state):
-    energies = latent_actions@latent_state
-    return actions_arr[np.argmin(energies)]
 
 def F(theta , gamma=1, max_step=5e3):
     gym.logger.set_level(40)
     env = gym.make(env_name)#this takes no time
-    nA, = env.action_space.shape
+    nA = env.action_space.n
     G = 0.0
     done = False
     discount = 1
@@ -188,7 +187,7 @@ def F_arr(epsilons, sigma, theta):
 def eval(theta):
     # gym.logger.set_level(40)
     # env = gym.make(env_name)#this takes no time
-    nA, = env.action_space.shape
+    nA = env.action_space.n
     G = 0.0
     done = False
     state = env.reset()
@@ -208,21 +207,17 @@ def eval(theta):
 global env_name
 global policy
 global time_step_count
-env_name = 'MountainCarContinuous-v0'
-# env_name = 'InvertedPendulumBulletEnv-v0'
-# env_name = 'FetchPush-v1'
-# env_name = 'HalfCheetah-v2'
-# env_name = 'Swimmer-v2'
-# env_name = 'LunarLanderContinuous-v2'
-# env_name = 'Humanoid-v2'
-# env_name = 'Walker2d-v2'
+# env_name = "CartPole-v1"
+# env_name = 'MountainCar-v0'
+env_name = 'Acrobot-v1'
+
 policy = "standard"
 
 time_step_count=0
 
 if __name__ == '__main__':
     import_theta = False
-    useParallel=1#if parallelize
+    useParallel=1 #if parallelize
     print("number of CPUs: ",mp.cpu_count())
     num_seeds = 10
     max_epoch = 501
@@ -232,7 +227,7 @@ if __name__ == '__main__':
         gym.logger.set_level(40)
         env = gym.make(env_name)
         state_dim = env.reset().size
-        nA, = env.action_space.shape
+        nA = env.action_space.n
         theta_dim = get_theta_dim()
         method = "AT_parallel"
 
