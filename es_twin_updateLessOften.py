@@ -55,6 +55,7 @@ def state_feed_forward(state_net,state):#have to separate feed_forward from the 
     x = torchF.relu(state_net.fc3(x))
     x = state_net.fc4(x)
     latent_state = x.detach().numpy()
+    #latent_state = latent_state/sum(np.abs(latent_state)) #normalize
     return latent_state
 
 class action_tower(nn.Module):
@@ -88,7 +89,7 @@ def get_theta_dim():
     action_net = action_tower()
     state_nn_dim = get_nn_dim(state_net)
     action_nn_dim = get_nn_dim(action_net)
-    return action_nn_dim+state_nn_dim,action_nn_dim,state_nn_dim
+    return action_nn_dim+state_nn_dim
 
 def action_feed_forward_efficient(action_net,actions_arr):
     #divide the work. else will take too long time once we scale
@@ -107,48 +108,36 @@ def collect_result(result):
 def AT_gradient_parallel(useParallel, theta, sigma=1, N=100,update_action=0):
     numCPU=mp.cpu_count()
     pool=mp.Pool(numCPU)
-    epsilons=orthogonal_epsilons(N,theta.size)
-    global result_list,steps_list,time_step_count,table_all,sorted_actions_arr_all
-    result_list = []; steps_list = []
-    # grad_multiplier = epsilons[0]/(sigma*2)
-    # if update_action==0:
-    #     output1, time1 = F(theta + sigma * epsilons[0],table_all,sorted_actions_arr_all,grad_multiplier)
-    #     output2, time2 = F(theta - sigma * epsilons[0],table_all,sorted_actions_arr_all,-grad_multiplier)
-    # else:
-    #     output1, time1 = F(theta + sigma * epsilons[0],table_all[0],sorted_actions_arr_all[0],grad_multiplier)
-    #     output2, time2 = F(theta - sigma * epsilons[0],table_all[0],sorted_actions_arr_all[0],-grad_multiplier)
-    # grad=output1+output2
-    # print('grad ',grad)
-    num_jobs = action_nn_dim
-    if update_action == 0:
-        num_jobs = state_nn_dim
-    table_all,sorted_actions_arr_all = get_table_all(theta,sigma,epsilons[:num_jobs],update_action)
+    jobs=math.ceil(N/numCPU)
+    if math.floor(N/numCPU) >= 0.8*N/numCPU:
+        jobs = math.floor(N/numCPU)
+    N=jobs*numCPU
 
-    for i in range(num_jobs):
-        if update_action==1:
-            pool.apply_async(F,args = (theta + sigma * epsilons[i], table_all[i],
-                                       sorted_actions_arr_all[i],epsilons[i]/(sigma*2)),callback=collect_result)
-            pool.apply_async(F,args = (theta - sigma * epsilons[i], table_all[num_jobs+i],
-                                       sorted_actions_arr_all[num_jobs+i],-epsilons[i]/(sigma*2)),callback=collect_result)
-        else:#no update to action tower. use the same table
-            pool.apply_async(F,args = (theta + sigma * epsilons[i], table_all,
-                                       sorted_actions_arr_all,epsilons[i]/(sigma*2)),callback=collect_result)
-            pool.apply_async(F,args = (theta - sigma * epsilons[i], table_all,
-                                       sorted_actions_arr_all,-epsilons[i]/(sigma*2)),callback=collect_result)
-    pool.close()
-    pool.join()
-    grad = np.average(result_list,axis=0)
-    time_step_count+=sum(steps_list)
-    # print('result list length: ',len(result_list),'result list[0] shape: ',result_list[0].shape)
-    # print('result list[1]:', result_list[1])
+    epsilons=orthogonal_epsilons(N,theta.size)
+    global result_list,steps_list,time_step_count
+    result_list = []; steps_list = []
+
+    action_net = action_tower()
+    action_nn_dim = get_nn_dim(action_net)
+    if update_action==0:
+        epsilons[:,:action_nn_dim]=np.zeros((N,action_nn_dim))#actions params are not updated
+
+    if useParallel==1:
+        for i in range(numCPU):
+            pool.apply_async(F_arr,args = (epsilons[i*jobs:(i+1)*jobs], sigma, theta),callback=collect_result)
+        pool.close()
+        pool.join()
+        grad = np.average(result_list,axis=0)
+        time_step_count+=sum(steps_list)
+    else:
+        result_list = F_arr(epsilons,sigma,theta)
+        time_step_count+=result_list[1]
+        grad = result_list[0]
+    #print('result list:', result_list)
     if update_action == 0:
         grad[:action_nn_dim]=np.zeros(action_nn_dim)#actions params are not updated
-    else:
-        grad[action_nn_dim:] = np.zeros(state_nn_dim)
-    # print('final grad ',grad)
     return grad
-
-
+  
 def orthogonal_epsilons(N,dim):
     epsilons_N=np.zeros((math.ceil(N/dim)*dim,dim))    
     for i in range(0,math.ceil(N/dim)):
@@ -179,106 +168,70 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
       with open(filename, "a") as f:
         f.write("%.d %.2f \n" % (i, accum_rewards[i]))
         #f.write("%.d %.2f %.d \n" % (i, accum_rewards[i],time_step_count))
-    if i%1==0:
+    if i%5==0:
         print('runtime until now: ',time.time()-t1)#, ' time step: ',time_step_count)
     #if time_step_count>= 10**7: #terminate at given time step threshold.
     #    sys.exit()
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N,update_or_not(i))
   return theta, accum_rewards
 
+def energy_action(actions_arr, latent_actions, latent_state):
+    energies = latent_actions@latent_state
+    return actions_arr[np.argmin(energies)]
 
-def energy_action(nA, table, latent_state, actions_arr):
-    left, right = 0, len(table) - 1  # left end and right end of search region. we iteratively refine the search region
-    currentDepth = 0
-    while currentDepth < max_depth:
-        # go to next level of depth
-        mid = (left + right) / 2  # not an integer
-        left_latent_action_sum = table[math.ceil(mid)]
-        if left > 0:
-            left_latent_action_sum = left_latent_action_sum - table[left - 1]
-        right_latent_action_sum = table[right] - table[math.floor(mid)]
-        # product of energy is better than sum of energy
-        multiplier = 5
-        left_dp = left_latent_action_sum @ latent_state
-        right_dp = right_latent_action_sum @ latent_state
-        normalizing_constant = (0.1 + max(abs(left_dp),abs(right_dp))) / multiplier
-        left_prob = np.exp(left_dp / normalizing_constant)
-        right_prob = np.exp(right_dp / normalizing_constant)  # this is product of energy
-
-        p = left_prob / (left_prob + right_prob)
-        if p > 1 or math.isnan(p) == True:
-            print('p: ', p, 'left prob: ', left_prob, 'right prob: ', right_prob)
-        coin_toss = np.random.binomial(1, p)
-        if coin_toss == 1:  # go left
-            right = math.floor(mid)
-        else:  # go right
-            left = math.ceil(mid)
-        currentDepth += 1
-        # print('depth: ',currentDepth,'left: ',left,'right: ',right,'p ',p)
-    return actions_arr[left]
-
-
-def get_table(theta, actions_arr):
-    action_net = get_action_net(theta)
-    latent_action = action_feed_forward_efficient(action_net, actions_arr)
-    # sort latent actions
-    min_max_scaler = preprocessing.MinMaxScaler()
-    multiplier = 0.4 # rescale latent actions to [0,multiplier]
-    normalized_latent_actions = multiplier*min_max_scaler.fit_transform(latent_action)
-    normalized_latent_actions = np.round(normalized_latent_actions, 1)
-    index_arr = np.lexsort(normalized_latent_actions.T)  # sort lexicographically
-
-    table = np.cumsum(latent_action[index_arr], axis=0)
-    return table, actions_arr[index_arr]
-
-def get_table_all(theta,sigma,epsilons,update_action):
-    if update_action==0:#generate one table
-        actions_arr=np.random.uniform(low=-1, high=1, size=(sample_size * unit, nA))
-        table_all, sorted_actions_arr_all = get_table(theta, actions_arr)
-    else:#generate many tables
-        table_all=np.zeros((2*epsilons.shape[0],sample_size * unit, nA))
-        sorted_actions_arr_all=np.zeros((2*epsilons.shape[0],sample_size * unit, nA))
-        for i in range(epsilons.shape[0]):
-            actions_arr = np.random.uniform(low=-1, high=1, size=(sample_size * unit, nA))
-            table_all[i], sorted_actions_arr_all[i] = get_table(theta+sigma * epsilons[i], actions_arr)
-            actions_arr = np.random.uniform(low=-1, high=1, size=(sample_size * unit, nA))
-            table_all[i+epsilons.shape[0]], sorted_actions_arr_all[i+epsilons.shape[0]] = get_table(
-                theta-sigma * epsilons[i], actions_arr)
-    return table_all,sorted_actions_arr_all
-
-def F(theta, table,sorted_actions_arr,grad_multiplier):
-    gym.logger.set_level(40);gamma=1
+def F(theta , gamma=1, max_step=5e3):
+    gym.logger.set_level(40)
     env = gym.make(env_name)#this takes no time
+    nA, = env.action_space.shape
     G = 0.0
     done = False
     discount = 1
     state = env.reset()
+    a_dim = np.arange(nA)
+    state_dim = state.size
     steps_count=0#cannot use global var here because subprocesses cannot edit global var
     state_net = get_state_net(theta)
+    action_net = get_action_net(theta)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        action = energy_action(nA, table, latent_state,sorted_actions_arr)
+        actions_arr = np.random.uniform(-1,1,size=(1000,nA))
+        latent_actions = action_feed_forward(action_net,actions_arr)
+        action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         steps_count+=1
         G += reward * discount
         discount *= gamma
-    return G*grad_multiplier,steps_count
+    return G,steps_count
 
+def F_arr(epsilons, sigma, theta):
+    grad = np.zeros(epsilons.shape)
+    steps_count = 0
+    for i in range(epsilons.shape[0]):
+        #can be made more efficient. but would not improve runtime, since only loop <=8 times
+        output1, time1 = F(theta + sigma * epsilons[i])
+        output2, time2 = F(theta - sigma * epsilons[i])
+        grad[i] = (output1 - output2) * epsilons[i]
+        steps_count += time1+time2
+    grad = np.average(grad,axis=0)/sigma/2
+    return [grad,steps_count]
 
 def eval(theta):
     gym.logger.set_level(40)
     env = gym.make(env_name)#this takes no time
+    nA, = env.action_space.shape
     G = 0.0
     done = False
     state = env.reset()
+    a_dim = np.arange(nA)
+    state_dim = state.size
     global time_step_count
-    #preprocessing
-    actions_arr = np.random.uniform(low=-1, high=1, size=(sample_size * unit, nA))
-    table,sorted_actions_arr = get_table(theta,actions_arr)
     state_net = get_state_net(theta)
+    action_net = get_action_net(theta)
     while not done:
         latent_state = state_feed_forward(state_net,state)
-        action = energy_action(nA, table, latent_state,sorted_actions_arr)
+        actions_arr = np.random.uniform(-1,1,size=(1000,nA))
+        latent_actions = action_feed_forward(action_net,actions_arr)
+        action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         time_step_count+=1
         G += reward
@@ -299,8 +252,8 @@ time_step_count=0
 if __name__ == '__main__':
     useParallel=1#if parallelize
     env = gym.make(env_name); state_dim = env.reset().size; nA, = env.action_space.shape
-    sample_size = 64;unit =512 #total sample amount = sampling_size*unit
-    theta_dim,action_nn_dim,state_nn_dim = get_theta_dim()
+    sample_size = 1;unit =1024 #total sample amount = sampling_size*unit
+    theta_dim = get_theta_dim()
     outfile = "positive_RF_{}.txt".format(env_name+str(time.time()))
     with open(outfile, "w") as f:
         f.write("")
