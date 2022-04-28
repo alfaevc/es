@@ -68,7 +68,7 @@ class action_tower(nn.Module):
     def __init__(self):
         super(action_tower, self).__init__()
         nA = env.action_space.n
-        self.fc1 = nn.Linear(nA, nA, bias=False)#can automate this. create nn for any given input layer dimensions, instead of fixed dimensions  
+        self.fc1 = nn.Linear(1, nA, bias=False)#can automate this. create nn for any given input layer dimensions, instead of fixed dimensions  
         self.fc2 = nn.Linear(nA, nA, bias=False)
         
 
@@ -197,7 +197,7 @@ def F(theta , gamma=1, max_step=5e3):
     while not done:
         latent_state = state_feed_forward(state_net,state)
         actions_arr = np.arange(nA)
-        latent_actions = action_feed_forward(action_net,actions_arr)
+        latent_actions = action_feed_forward(action_net,actions_arr.reshape((nA,1)))
         action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         steps_count+=1
@@ -230,7 +230,7 @@ def eval(theta):
     while not done:
         latent_state = state_feed_forward(state_net,state)
         actions_arr = np.arange(nA)
-        latent_actions = action_feed_forward(action_net,actions_arr)
+        latent_actions = action_feed_forward(action_net,actions_arr.reshape((nA,1)))
         action = energy_action(actions_arr, latent_actions, latent_state)
         state, reward, done, _ = env.step(action)
         time_step_count+=1
