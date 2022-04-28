@@ -46,16 +46,16 @@ class state_tower(nn.Module):
         state_dim = env.reset().size
         nA = env.action_space.n
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
-        # self.fc2 = nn.Linear(nA, nA, bias=False)
+        self.fc2 = nn.Linear(nA, nA, bias=False)
         # self.fc3 = nn.Linear(nA, nA, bias=False)
         # self.fc4 = nn.Linear(nA, nA, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    #x = torchF.relu(state_net.fc1(x))
+    # x = torchF.relu(state_net.fc1(x))
     x = state_net.fc1(x)
     # x = torchF.relu(x)
-    # x = state_net.fc2(x)
+    x = state_net.fc2(x)
     # x = torchF.relu(x)
     # x = state_net.fc3(x)
     # x = torchF.relu(x)
@@ -243,8 +243,8 @@ global env_name
 global policy
 global time_step_count
 # env_name = "CartPole-v1"
-# env_name = 'MountainCar-v0'
-env_name = 'Acrobot-v1'
+env_name = 'MountainCar-v0'
+# env_name = 'Acrobot-v1'
 
 policy = "twin"
 
@@ -254,7 +254,7 @@ if __name__ == '__main__':
     import_theta = False
     useParallel=1 #if parallelize
     num_seeds = 10
-    max_epoch = 501
+    max_epoch = 3001
     for k in tqdm.tqdm(range(num_seeds)):
         print("number of CPUs: ",mp.cpu_count())
         gym.logger.set_level(40)

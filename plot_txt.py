@@ -42,12 +42,16 @@ def main():
 '''
 
 def main():
-    env_name = "MountainCarContinuous-v0"
+    # env_name = "MountainCar-v0"
+    env_name = "Acrobot-v1"
+    # env_name = "MountainCarContinuous-v0"
     # env_name = "InvertedPendulumBulletEnv-v0"
     # env_name = 'LunarLanderContinuous-v2'
     # env_name = "Hopper-v2"
     # env_name = "HalfCheetah-v2"
+    # methods = ["twin", "standard"]
     methods = ["twin", "onetower", "standard"]
+    # terms = ["ITT", "explicit"]
     terms = ["ITT", "IOT", "explicit"]
 
     d = {}
@@ -69,9 +73,9 @@ def main():
     
     d["twin"] = [str(i) for i in range(10)]
     d["standard"] = [str(i) for i in range(10)]
-    d["onetower"] = [str(i) for i in range(10,20)]
+    d["onetower"] = [str(i) for i in range(10)]
 
-    N = 500
+    N = 100
 
     for i in range(len(methods)):
         evals_list = []
@@ -99,11 +103,11 @@ def main():
         plt.plot(ns, avs, '-o', markersize=1, label=terms[i])
 
 
-    plt.legend(loc='best', bbox_to_anchor=(0.5, 0., 0.5, 0.5))
+    plt.legend(loc='lower right', bbox_to_anchor=(0.5, 0., 0.5, 0.5))
     plt.grid(True)
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
-    plt.ylim([-100, 110])
+    plt.ylim([-500, 0])
 
     plt.title("ES {0}".format(env_name), fontsize = 20)
     plt.savefig("plots/{0}.png".format(env_name))

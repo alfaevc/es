@@ -48,22 +48,22 @@ class state_tower(nn.Module):
         state_dim = env.reset().size
         nA = env.action_space.n
         self.fc1 = nn.Linear(state_dim+1, nA, bias=False) 
-        self.fc2 = nn.Linear(nA, 1, bias=False)
-        # self.fc3 = nn.Linear(nA, nA, bias=False)
+        self.fc2 = nn.Linear(nA, nA, bias=False)
+        self.fc3 = nn.Linear(nA, 1, bias=False)
         # self.fc4 = nn.Linear(nA, nA, bias=False)
         # self.fc5 = nn.Linear(nA, nA, bias=False)
         # self.fc6 = nn.Linear(nA, 1, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    x = torchF.relu(state_net.fc1(x))
+    # x = torchF.relu(state_net.fc1(x))
     # x = torchF.relu(state_net.fc2(x))
     # x = torchF.relu(state_net.fc3(x))
     # x = torchF.relu(state_net.fc4(x))
     # x = torchF.relu(state_net.fc5(x))
-    # x = state_net.fc1(x)
+    x = state_net.fc1(x)
     x = state_net.fc2(x)
-    #x = state_net.fc3(x)
+    x = state_net.fc3(x)
     #x = state_net.fc4(x)
     #x = state_net.fc5(x)
     # x = state_net.fc6(x)
@@ -207,8 +207,8 @@ def eval(theta):
 global env_name
 global policy
 # env_name = "CartPole-v1"
-# env_name = 'MountainCar-v0'
-env_name = 'Acrobot-v1'
+env_name = 'MountainCar-v0'
+# env_name = 'Acrobot-v1'
 
 policy = "onetower"
 global time_step_count
@@ -216,7 +216,7 @@ time_step_count=0
 
 if __name__ == '__main__':
     num_seeds = 10
-    max_epoch = 501
+    max_epoch = 3001
     res = np.zeros((num_seeds, max_epoch))
 
     for k in tqdm.tqdm(range(num_seeds)):

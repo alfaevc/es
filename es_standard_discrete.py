@@ -49,26 +49,26 @@ class state_tower(nn.Module):
         nA = env.action_space.n
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
         self.fc2 = nn.Linear(nA, nA, bias=False)
-        # self.fc3 = nn.Linear(nA, nA, bias=False)
+        self.fc3 = nn.Linear(nA, nA, bias=False)
         # self.fc4 = nn.Linear(nA, nA, bias=False)
         # self.fc5 = nn.Linear(nA, nA, bias=False)
         # self.fc6 = nn.Linear(nA, nA, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    x = torchF.relu(state_net.fc1(x))
+    # x = torchF.relu(state_net.fc1(x))
     # x = torchF.relu(state_net.fc2(x))
     # x = torchF.relu(state_net.fc3(x))
     # x = torchF.relu(state_net.fc4(x))
     # x = torchF.relu(state_net.fc5(x))
-    # x = state_net.fc1(x)
-    # x = state_net.fc2(x)
+    x = state_net.fc1(x)
+    x = state_net.fc2(x)
     # x = state_net.fc3(x)
     #x = state_net.fc4(x)
     #x = state_net.fc5(x)
     # x = state_net.fc6(x)
-    x = torchF.softmax(state_net.fc2(x))
-    # x = torchF.softmax(state_net.fc3(x))
+    # x = torchF.softmax(state_net.fc2(x))
+    x = torchF.softmax(state_net.fc3(x))
     action = x.detach().numpy()
     action = np.argmax(action)
     return action
@@ -208,8 +208,8 @@ global env_name
 global policy
 global time_step_count
 # env_name = "CartPole-v1"
-# env_name = 'MountainCar-v0'
-env_name = 'Acrobot-v1'
+env_name = 'MountainCar-v0'
+# env_name = 'Acrobot-v1'
 
 policy = "standard"
 
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     useParallel=1 #if parallelize
     print("number of CPUs: ",mp.cpu_count())
     num_seeds = 10
-    max_epoch = 501
+    max_epoch = 3001
     res = np.zeros((num_seeds, max_epoch))
 
     for k in tqdm.tqdm(range(num_seeds)):
