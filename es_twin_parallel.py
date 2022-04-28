@@ -46,20 +46,20 @@ class state_tower(nn.Module):
         state_dim = env.reset().size
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
-        self.fc2 = nn.Linear(nA, nA, bias=False)
-        self.fc3 = nn.Linear(nA, nA, bias=False)
-        self.fc4 = nn.Linear(nA, nA, bias=False)
+        # self.fc2 = nn.Linear(nA, nA, bias=False)
+        # self.fc3 = nn.Linear(nA, nA, bias=False)
+        # self.fc4 = nn.Linear(nA, nA, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
     #x = torchF.relu(state_net.fc1(x))
     x = state_net.fc1(x)
-    x = torchF.relu(x)
-    x = state_net.fc2(x)
-    x = torchF.relu(x)
-    x = state_net.fc3(x)
-    x = torchF.relu(x)
-    x = state_net.fc4(x)
+    # x = torchF.relu(x)
+    # x = state_net.fc2(x)
+    # x = torchF.relu(x)
+    # x = state_net.fc3(x)
+    # x = torchF.relu(x)
+    # x = state_net.fc4(x)
     latent_state = x.detach().numpy()
     #latent_state = latent_state/sum(np.abs(latent_state)) #normalize
     return latent_state
@@ -76,8 +76,8 @@ def action_feed_forward(action_net,action):#have to separate feed_forward from t
     x = (torch.from_numpy(action)).float()
     #x = torchF.relu(action_net.fc1(x))
     x = action_net.fc1(x)#can automate this. feedforward given nn dimensions
-    x = torchF.relu(x)
-    x = action_net.fc2(x)
+    # x = torchF.relu(x)
+    # x = action_net.fc2(x)
     latent_action = x.detach().numpy()
     return latent_action
 
@@ -171,7 +171,7 @@ def gradascent(useParallel, theta0, filename, method=None, sigma=1, eta=1e-3, ma
     #    sys.exit()
     theta += eta * AT_gradient_parallel(useParallel, theta, sigma, N=N)
     #print(theta)
-    out_theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
+    out_theta_file = "files/{0}/{0}_theta_{1}.txt".format(policy, env_name+t)
     np.savetxt(out_theta_file, theta, delimiter=' ', newline=' ')
     # with open(out_theta_file, "w") as h:
     #    for th in theta:
@@ -242,9 +242,10 @@ def eval(theta):
 global env_name
 global policy
 global time_step_count
-#env_name = 'InvertedPendulumBulletEnv-v0'
+# env_name = 'InvertedPendulumBulletEnv-v0'
+env_name = 'MountainCarContinuous-v0'
 # env_name = 'FetchPush-v1'
-env_name = 'HalfCheetah-v2'
+# env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
@@ -254,34 +255,36 @@ time_step_count=0
 
 if __name__ == '__main__':
     import_theta = False
-    useParallel=1#if parallelize
-    print("number of CPUs: ",mp.cpu_count())
-    gym.logger.set_level(40)
-    env = gym.make(env_name)
-    state_dim = env.reset().size
-    nA, = env.action_space.shape
-    theta_dim = get_theta_dim()
-    num_seeds = 1
-    max_epoch = 1001
-    res = np.zeros((num_seeds, max_epoch))
-    method = "AT_parallel"
+    useParallel=0 #if parallelize
+    num_seeds = 10
+    max_epoch = 501
+    for k in tqdm.tqdm(range(1, num_seeds)):
+        print("number of CPUs: ",mp.cpu_count())
+        gym.logger.set_level(40)
+        env = gym.make(env_name)
+        state_dim = env.reset().size
+        nA, = env.action_space.shape
+        theta_dim = get_theta_dim()
+        # num_seeds = 1
+        # max_epoch = 1001
+        res = np.zeros((num_seeds, max_epoch))
+        method = "AT_parallel"
 
-    old_t = "1649190591.4257033"
+        old_t = str(k)
 
-    t = str(time.time())
+        t = str(k)
 
-    if import_theta:
-        t = old_t
+        if import_theta:
+            t = old_t
 
-    # existing logged file
-    theta_file = "files/{0}_theta_{1}.txt".format(policy, env_name+t)
-    outfile = "files/{0}_{1}.txt".format(policy, env_name+t)
+        # existing logged file
+        theta_file = "files/{0}/{0}_theta_{1}.txt".format(policy, env_name+t)
+        outfile = "files/{0}/{0}_{1}.txt".format(policy, env_name+t)
 
-    #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
-    #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
-    
-    t_start=time.time()
-    for k in tqdm.tqdm(range(num_seeds)):
+        #all_actions = np.random.uniform(low=-1,high=1,size=(max(10,5**nA),nA))
+        #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
+        
+        t_start=time.time()
         N = theta_dim#make n larger to show effect of parallelization on pendulum
         theta0 = np.random.standard_normal(size=theta_dim)
 

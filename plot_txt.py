@@ -42,13 +42,13 @@ def main():
 '''
 
 def main():
+    env_name = "MountainCarContinuous-v0"
     # env_name = "InvertedPendulumBulletEnv-v0"
     # env_name = 'LunarLanderContinuous-v2'
     # env_name = "Hopper-v2"
-    env_name = "HalfCheetah-v2"
-
-    methods = ["standard", "onetower", "twin"]
-    terms = ["explicit", "IOT", "ITT"]
+    # env_name = "HalfCheetah-v2"
+    methods = ["twin", "onetower", "standard"]
+    terms = ["ITT", "IOT", "explicit"]
 
     d = {}
     
@@ -61,16 +61,17 @@ def main():
                          "1649815887.2139251", "1649815887.2133114", "1649681269.410244",
                          "1649681232.7885218", "1649679362.5310104", "1649659663.1422014",
                          "1649659626.074103"]
+
     onetower_ev_seeds = ["1649692287.029973", "1649659633.9536998", "1649638066.4576948",
                          "1649638011.3690753", "1649519668.0558302", "1649494375.4381204",
                          "1649475361.8918884", "1649475339.931297", "1649474178.0274796",
                          "1649638013.1301358"]
     
-    d["twin"] = twin_ev_seeds
-    d["standard"] = standard_ev_seeds
-    d["onetower"] = onetower_ev_seeds
+    d["twin"] = [str(i) for i in range(10)]
+    d["standard"] = [str(i) for i in range(10)]
+    d["onetower"] = [str(i) for i in range(10,20)]
 
-    N = 4000
+    N = 500
 
     for i in range(len(methods)):
         evals_list = []
@@ -102,10 +103,10 @@ def main():
     plt.grid(True)
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
-    plt.ylim([-1000, 4000])
+    plt.ylim([-100, 110])
 
     plt.title("ES {0}".format(env_name), fontsize = 20)
-    plt.savefig("plots/ES {0} 10 seeds.png".format(env_name))
+    plt.savefig("plots/{0}.png".format(env_name))
 
 
 if __name__ == '__main__':

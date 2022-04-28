@@ -15,7 +15,8 @@ from itertools import product
 if __name__ == '__main__':
   # env_name = 'InvertedPendulumBulletEnv-v0'
   # env_name = 'IceHockey-ram-v0'
-  env_name = 'BipedalWalker-v3'
+  # env_name = 'BipedalWalker-v3'
+  env_name = "Acrobot-v1"
   # env_name = 'Walker2d-v2'
   # env_name = 'Swimmer-v2'
   # env_name = 'CartPole-v0'
@@ -25,7 +26,7 @@ if __name__ == '__main__':
 
   state_dim, = env.observation_space.shape
   print(state_dim)
-  nA, = env.action_space.shape
+  nA = env.action_space.n
   print(nA)
   a_mean = np.zeros(nA)
   a_v = np.ones(nA)
