@@ -128,32 +128,34 @@ def AT_gradient_parallel(useParallel, theta, sigma=1, N=100, update_action=0):
     global result_list, steps_list, time_step_count, table_all, sorted_actions_arr_all
     result_list = [];
     steps_list = []
-    num_jobs = action_nn_dim
-    if update_action == 0:
-        num_jobs = state_nn_dim
-        epsilons = orthogonal_epsilons(state_nn_dim, theta.size)
-        epsilons[:, :action_nn_dim] = np.zeros((num_jobs, action_nn_dim))
-    else:
-        epsilons = orthogonal_epsilons(action_nn_dim, theta.size)
-        epsilons[:, action_nn_dim:] = np.zeros((num_jobs, state_nn_dim))
-    actions_arr_all, latent_actions_arr_all, keys_val_all, intervals_all, projection_vector_all \
+    num_jobs = theta_dim
+    epsilons = orthogonal_epsilons(theta_dim, theta_dim)
+    # num_jobs = action_nn_dim
+    # if update_action == 0:
+    #     num_jobs = state_nn_dim
+    #     epsilons = orthogonal_epsilons(state_nn_dim, theta.size)
+    #     epsilons[:, :action_nn_dim] = np.zeros((num_jobs, action_nn_dim))
+    # else:
+    #     epsilons = orthogonal_epsilons(action_nn_dim, theta.size)
+    #     epsilons[:, action_nn_dim:] = np.zeros((num_jobs, state_nn_dim))
+    actions_arr_all, latent_actions_arr_all, medians_all, intervals_all, projection_vector_all \
         = get_multiple_tables(update_action, sigma, epsilons, theta)
     for i in range(num_jobs):
         # if update_action==1:
         pool.apply_async(F, args=(theta + sigma * epsilons[i], actions_arr_all[i], latent_actions_arr_all[i],
-                                  keys_val_all[i], intervals_all[i], projection_vector_all[i],
+                                  medians_all[i], intervals_all[i], projection_vector_all[i],
                                   epsilons[i] / (sigma * 2)), callback=collect_result)
         pool.apply_async(F, args=(theta - sigma * epsilons[i], actions_arr_all[num_jobs + i] \
-                                      , latent_actions_arr_all[num_jobs + i], keys_val_all[num_jobs + i],
+                                      , latent_actions_arr_all[num_jobs + i], medians_all[num_jobs + i],
                                   intervals_all[num_jobs + i] \
                                       , projection_vector_all[num_jobs + 1], -epsilons[i] / (sigma * 2)),
                          callback=collect_result)
         # else:
         #     pool.apply_async(F, args=(theta + sigma * epsilons[i], actions_arr_all, latent_actions_arr_all,
-        #                               keys_val_all, intervals_all, projection_vector_all,
+        #                               medians_all, intervals_all, projection_vector_all,
         #                               epsilons[i] / (sigma * 2)), callback=collect_result)
         #     pool.apply_async(F, args=(theta - sigma * epsilons[i], actions_arr_all, latent_actions_arr_all,
-        #                               keys_val_all,intervals_all, projection_vector_all, -epsilons[i] / (sigma * 2)),
+        #                               medians_all,intervals_all, projection_vector_all, -epsilons[i] / (sigma * 2)),
         #                               callback=collect_result)
     pool.close()
     pool.join()
@@ -161,10 +163,10 @@ def AT_gradient_parallel(useParallel, theta, sigma=1, N=100, update_action=0):
     time_step_count += sum(steps_list)
     # print('result list length: ',len(result_list),'result list[0] shape: ',result_list[0].shape)
     # print('result list[1]:', result_list[1])
-    if update_action == 0:
-        grad[:action_nn_dim] = np.zeros(action_nn_dim)  # actions params are not updated
-    else:
-        grad[action_nn_dim:] = np.zeros(state_nn_dim)
+    # if update_action == 0:
+    #     grad[:action_nn_dim] = np.zeros(action_nn_dim)  # actions params are not updated
+    # else:
+    #     grad[action_nn_dim:] = np.zeros(state_nn_dim)
     # print('final grad ',grad)
     return grad
 
@@ -174,19 +176,19 @@ def get_multiple_tables(update_action, sigma, epsilons, theta):
     n_tables = epsilons.shape[0]
     actions_arr_all = np.zeros((2 * n_tables, sample_size * unit, nA))
     latent_actions_arr_all = np.zeros((2 * n_tables, sample_size * unit, nA))
-    keys_val_all = [0] * n_tables * 2;
+    medians_all = [0] * n_tables * 2;
     intervals_all = [0] * n_tables * 2
     projection_vector_all = np.zeros((2 * n_tables, n_proj_vec, nA + 1))
     for i in range(n_tables):
-        latent_actions_arr_all[i], actions_arr_all[i], keys_val_all[i], intervals_all[i], projection_vector_all[i] \
+        latent_actions_arr_all[i], actions_arr_all[i], medians_all[i], intervals_all[i], projection_vector_all[i] \
             = construct_hashing_table(theta + sigma * epsilons[i])
-        latent_actions_arr_all[n_tables + i], actions_arr_all[n_tables + i], keys_val_all[n_tables + i] \
+        latent_actions_arr_all[n_tables + i], actions_arr_all[n_tables + i], medians_all[n_tables + i] \
             , intervals_all[n_tables + i], projection_vector_all[n_tables + i] = construct_hashing_table(
             theta - sigma * epsilons[i])
     # else:
-    #     latent_actions_arr_all, actions_arr_all, keys_val_all, intervals_all, projection_vector_all \
+    #     latent_actions_arr_all, actions_arr_all, medians_all, intervals_all, projection_vector_all \
     #         = construct_hashing_table(theta)
-    return actions_arr_all, latent_actions_arr_all, keys_val_all, intervals_all, projection_vector_all
+    return actions_arr_all, latent_actions_arr_all, medians_all, intervals_all, projection_vector_all
 
 
 def orthogonal_epsilons(N, dim):
@@ -241,8 +243,9 @@ def construct_hashing_table(theta):
     max_norm = max(latent_actions_norm)
     extra_dim = np.sqrt(max_norm - latent_actions_norm)
     aug_latent_actions_arr = np.hstack((latent_actions_arr, extra_dim.reshape((-1, 1))))
+    medians = np.median(aug_latent_actions_arr @ projection_vector.T,axis=0)
     # generate keys
-    binary_vecs = np.sign(aug_latent_actions_arr @ projection_vector.T)  # shape is (num_actions,n_proj_vec)
+    binary_vecs = np.sign(aug_latent_actions_arr @ projection_vector.T-medians)  # shape is (num_actions,n_proj_vec)
     binary_vecs = (binary_vecs + 1) / 2
     powers = 2 ** np.arange(n_proj_vec)
     keys = np.dot(binary_vecs, powers)
@@ -255,15 +258,15 @@ def construct_hashing_table(theta):
     start_points = idx_start[start_points]
     end_points = np.minimum(start_points + query_size, sample_size * unit - 1)
     start_points = np.minimum(start_points, sample_size * unit - query_size)
-    # just so that we always query 1000 points
+    # just so that we always query the same amount of points
     intervals_all = np.hstack(
         (start_points.reshape((-1, 1)), end_points.reshape((-1, 1))))  # shape should be np.zeros((2**n_proj_vec,2))
     intervals_all = intervals_all.astype(int)
-    return latent_actions_arr, actions_arr, keys_val, intervals_all, projection_vector
+    return latent_actions_arr, actions_arr, medians, intervals_all, projection_vector
 
 
-def energy_action(latent_actions_arr, actions_arr, latent_state, keys_val, intervals, projection_vector,powers):
-    binary_rep = (np.sign(projection_vector @ latent_state) + 1) / 2
+def energy_action(latent_actions_arr, actions_arr, latent_state, medians, intervals, projection_vector,powers):
+    binary_rep = (np.sign(projection_vector @ latent_state-medians) + 1) / 2
     query = int(round(binary_rep @ powers))
     latent_actions_queried = latent_actions_arr[intervals[query,0]:intervals[query,1]]
     ind = np.argmax(
@@ -272,7 +275,7 @@ def energy_action(latent_actions_arr, actions_arr, latent_state, keys_val, inter
     return actions_arr[intervals[query,0]+ind]
 
 
-def F(theta, actions_arr, latent_actions_arr, keys_val, intervals, projection_vector, grad_multiplier):
+def F(theta, actions_arr, latent_actions_arr, medians, intervals, projection_vector, grad_multiplier):
     gym.logger.set_level(40);
     gamma = 1
     env = gym.make(env_name)  # this takes no time
@@ -286,7 +289,7 @@ def F(theta, actions_arr, latent_actions_arr, keys_val, intervals, projection_ve
     powers = 2 ** np.arange(n_proj_vec)
     while not done:
         latent_state = state_feed_forward(state_net, state)
-        action = energy_action(latent_actions_arr, actions_arr, latent_state, keys_val, intervals,
+        action = energy_action(latent_actions_arr, actions_arr, latent_state, medians, intervals,
                                        projection_vector,powers)
         state, reward, done, _ = env.step(action)
         steps_count += 1
@@ -302,14 +305,14 @@ def eval(theta):
     done = False
     state = env.reset()
     global time_step_count
-    latent_actions_arr, actions_arr, keys_val, intervals, projection_vector = construct_hashing_table(theta)
+    latent_actions_arr, actions_arr, medians, intervals, projection_vector = construct_hashing_table(theta)
     state_net = get_state_net(theta)
     #tot_improve = 0
     projection_vector = projection_vector[:,:nA]#last entry is just to normalize actions
     powers = 2 ** np.arange(n_proj_vec)
     while not done:
         latent_state = state_feed_forward(state_net, state)
-        action = energy_action(latent_actions_arr, actions_arr, latent_state, keys_val, intervals,
+        action = energy_action(latent_actions_arr, actions_arr, latent_state, medians, intervals,
                                        projection_vector,powers)
         state, reward, done, _ = env.step(action)
         time_step_count += 1
@@ -337,10 +340,11 @@ if __name__ == '__main__':
     env = gym.make(env_name);
     state_dim = env.reset().size;
     nA, = env.action_space.shape
-    sample_size = 64;
+    sample_size = 16;
     unit = 1024  # total sample amount = sampling_size*unit
     n_proj_vec = 6  # num of projection vectors to use in hash table
-    query_size  = 1000 #number of actions to query each time step. query according to hash table.
+    query_size  = int(round(sample_size*unit/(2**n_proj_vec))) # # of actions to query. query according to hash table.
+    print('query size: ',query_size)
 
     theta_dim, action_nn_dim, state_nn_dim = get_theta_dim()
     outfile = "twin_hash_{}.txt".format(env_name + str(time.time()))
