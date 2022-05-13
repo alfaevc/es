@@ -42,8 +42,9 @@ def main():
 '''
 
 def main():
-    # env_name = "MountainCar-v0"
-    env_name = "Acrobot-v1"
+    #env_name = "MountainCar-v0"
+    env_name = "CartPole-v1"
+    # env_name = "Acrobot-v1"
     # env_name = "MountainCarContinuous-v0"
     # env_name = "InvertedPendulumBulletEnv-v0"
     # env_name = 'LunarLanderContinuous-v2'
@@ -107,7 +108,7 @@ def main():
     plt.grid(True)
     plt.xlabel('Iterations', fontsize = 15)
     plt.ylabel('Return', fontsize = 15)
-    plt.ylim([-500, 0])
+    plt.ylim([0, 600])
 
     plt.title("ES {0}".format(env_name), fontsize = 20)
     plt.savefig("plots/{0}.png".format(env_name))

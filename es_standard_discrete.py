@@ -56,13 +56,13 @@ class state_tower(nn.Module):
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    # x = torchF.relu(state_net.fc1(x))
-    # x = torchF.relu(state_net.fc2(x))
+    x = torchF.relu(state_net.fc1(x))
+    x = torchF.relu(state_net.fc2(x))
     # x = torchF.relu(state_net.fc3(x))
     # x = torchF.relu(state_net.fc4(x))
     # x = torchF.relu(state_net.fc5(x))
-    x = state_net.fc1(x)
-    x = state_net.fc2(x)
+    # x = state_net.fc1(x)
+    # x = state_net.fc2(x)
     # x = state_net.fc3(x)
     #x = state_net.fc4(x)
     #x = state_net.fc5(x)
@@ -207,8 +207,8 @@ def eval(theta):
 global env_name
 global policy
 global time_step_count
-# env_name = "CartPole-v1"
-env_name = 'MountainCar-v0'
+env_name = "CartPole-v1"
+# env_name = 'MountainCar-v0'
 # env_name = 'Acrobot-v1'
 
 policy = "standard"
@@ -220,7 +220,7 @@ if __name__ == '__main__':
     useParallel=1 #if parallelize
     print("number of CPUs: ",mp.cpu_count())
     num_seeds = 10
-    max_epoch = 3001
+    max_epoch = 501
     res = np.zeros((num_seeds, max_epoch))
 
     for k in tqdm.tqdm(range(num_seeds)):

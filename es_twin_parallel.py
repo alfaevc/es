@@ -46,20 +46,21 @@ class state_tower(nn.Module):
         state_dim = env.reset().size
         nA, = env.action_space.shape
         self.fc1 = nn.Linear(state_dim, nA, bias=False)  
-        # self.fc2 = nn.Linear(nA, nA, bias=False)
-        # self.fc3 = nn.Linear(nA, nA, bias=False)
-        # self.fc4 = nn.Linear(nA, nA, bias=False)
+        self.fc2 = nn.Linear(nA, nA, bias=False)
+        self.fc3 = nn.Linear(nA, nA, bias=False)
+        self.fc4 = nn.Linear(nA, nA, bias=False)
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    #x = torchF.relu(state_net.fc1(x))
-    x = state_net.fc1(x)
+    x = torchF.relu(state_net.fc1(x))
+    x = torchF.relu(state_net.fc2(x))
+    x = torchF.relu(state_net.fc3(x))
+    # x = state_net.fc1(x)
     # x = torchF.relu(x)
     # x = state_net.fc2(x)
-    # x = torchF.relu(x)
     # x = state_net.fc3(x)
     # x = torchF.relu(x)
-    # x = state_net.fc4(x)
+    x = state_net.fc4(x)
     latent_state = x.detach().numpy()
     #latent_state = latent_state/sum(np.abs(latent_state)) #normalize
     return latent_state
@@ -74,10 +75,10 @@ class action_tower(nn.Module):
 
 def action_feed_forward(action_net,action):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(action)).float()
-    #x = torchF.relu(action_net.fc1(x))
-    x = action_net.fc1(x)#can automate this. feedforward given nn dimensions
+    x = torchF.relu(action_net.fc1(x))
+    # x = action_net.fc1(x)#can automate this. feedforward given nn dimensions
     # x = torchF.relu(x)
-    # x = action_net.fc2(x)
+    x = action_net.fc2(x)
     latent_action = x.detach().numpy()
     return latent_action
 
@@ -243,22 +244,23 @@ global env_name
 global policy
 global time_step_count
 # env_name = 'InvertedPendulumBulletEnv-v0'
-env_name = 'MountainCarContinuous-v0'
+# env_name = 'MountainCarContinuous-v0'
 # env_name = 'FetchPush-v1'
 # env_name = 'HalfCheetah-v2'
 # env_name = 'Swimmer-v2'
 # env_name = 'LunarLanderContinuous-v2'
 # env_name = 'Humanoid-v2'
+env_name = "Ant-v2"
 policy = "twin"
 
 time_step_count=0
 
 if __name__ == '__main__':
     import_theta = False
-    useParallel=0 #if parallelize
+    useParallel=1 #if parallelize
     num_seeds = 10
-    max_epoch = 501
-    for k in tqdm.tqdm(range(1, num_seeds)):
+    max_epoch = 4001
+    for k in tqdm.tqdm(range(num_seeds)):
         print("number of CPUs: ",mp.cpu_count())
         gym.logger.set_level(40)
         env = gym.make(env_name)
@@ -285,7 +287,7 @@ if __name__ == '__main__':
         #all_actions = np.array([i for i in product([-1,-2/3, -1/3,0,1/3,2/3,1],repeat=nA)])
         
         t_start=time.time()
-        N = theta_dim#make n larger to show effect of parallelization on pendulum
+        N = theta_dim #make n larger to show effect of parallelization on pendulum
         theta0 = np.random.standard_normal(size=theta_dim)
 
         if import_theta:

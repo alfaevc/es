@@ -52,8 +52,8 @@ class state_tower(nn.Module):
 
 def state_feed_forward(state_net,state):#have to separate feed_forward from the class instance, otherwise multiprocessing raises errors
     x = (torch.from_numpy(state)).float()
-    # x = torchF.relu(state_net.fc1(x))
-    x = state_net.fc1(x)
+    x = torchF.relu(state_net.fc1(x))
+    # x = state_net.fc1(x)
     # x = torchF.relu(x)
     x = state_net.fc2(x)
     # x = torchF.relu(x)
@@ -242,8 +242,8 @@ def eval(theta):
 global env_name
 global policy
 global time_step_count
-# env_name = "CartPole-v1"
-env_name = 'MountainCar-v0'
+env_name = "CartPole-v1"
+# env_name = 'MountainCar-v0'
 # env_name = 'Acrobot-v1'
 
 policy = "twin"
@@ -254,7 +254,7 @@ if __name__ == '__main__':
     import_theta = False
     useParallel=1 #if parallelize
     num_seeds = 10
-    max_epoch = 3001
+    max_epoch = 501
     for k in tqdm.tqdm(range(num_seeds)):
         print("number of CPUs: ",mp.cpu_count())
         gym.logger.set_level(40)
@@ -296,6 +296,7 @@ if __name__ == '__main__':
         time_elapsed = int(round(time.time()-t_start))
         theta, accum_rewards = gradascent(useParallel, theta0, outfile, method=method, sigma=1, eta=1e-2, max_epoch=max_epoch, N=N, t=t)
         res[k] = np.array(accum_rewards)
+    
     
     '''
     ns = range(1, len(accum_rewards)+1)
